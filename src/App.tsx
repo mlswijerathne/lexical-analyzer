@@ -22,75 +22,6 @@ const allTokens = [WhiteSpace, Plus, Minus, Multiply, Divide, Equals, LParen, RP
 const ExpressionLexer = new Lexer(allTokens, { positionTracking: 'full' });
 
 // -------------------- Parser (CST) --------------------
-class ExpressionParser extends CstParser {
-  public assignment!: (idxInOriginal?: number) => any;
-  public statement!: (idxInOriginal?: number) => any;
-  public expression!: (idxInOriginal?: number) => any;
-  public expressionPrime!: (idxInOriginal?: number) => any;
-  public term!: (idxInOriginal?: number) => any;
-  public termPrime!: (idxInOriginal?: number) => any;
-  public factor!: (idxInOriginal?: number) => any;
-  constructor() {
-    super(allTokens, { recoveryEnabled: true });
-
-    const $ = this;
-
-    $.RULE('statement', () => {
-      $.OR([
-        { ALT: () => { $.SUBRULE($.assignment); } },
-        { ALT: () => { $.SUBRULE($.expression); } }
-      ]);
-    });
-
-    $.RULE('assignment', () => {
-      $.CONSUME(Identifier);
-      $.CONSUME(Equals);
-      $.SUBRULE($.expression);
-    });
-
-    $.RULE('expression', () => {
-      $.SUBRULE($.term);
-      $.SUBRULE($.expressionPrime);
-    });
-
-    $.RULE('expressionPrime', () => {
-      $.MANY(() => {
-        $.OR([
-          { ALT: () => { $.CONSUME(Plus); } },
-          { ALT: () => { $.CONSUME(Minus); } }
-        ]);
-        $.SUBRULE2($.term);
-      });
-    });
-
-    $.RULE('term', () => {
-      $.SUBRULE($.factor);
-      $.SUBRULE($.termPrime);
-    });
-
-    $.RULE('termPrime', () => {
-      $.MANY(() => {
-        $.OR([
-          { ALT: () => { $.CONSUME(Multiply); } },
-          { ALT: () => { $.CONSUME(Divide); } }
-        ]);
-        $.SUBRULE2($.factor);
-      });
-    });
-
-    $.RULE('factor', () => {
-      $.OR([
-        { ALT: () => { $.CONSUME(NumberLiteral); } },
-        { ALT: () => { $.CONSUME(Identifier); } },
-        { ALT: () => { $.CONSUME(LParen); $.SUBRULE($.expression); $.CONSUME(RParen); } }
-      ]);
-    });
-
-    this.performSelfAnalysis();
-  }
-}
-
-const parserInstance = new ExpressionParser();
 
 // -------------------- Types --------------------
 type SymbolRow = {
@@ -188,6 +119,9 @@ function analyzeExpression(input: string, _lineNumber = 1): AnalysisResult {
     // Clear previous parser state
     parserInstance.reset();
     
+    // Pre-analysis for better error detection
+    const preAnalysisErrors = preAnalyzeInput(input);
+    
     // Tokenize
     const lexResult = ExpressionLexer.tokenize(input);
     
@@ -212,43 +146,26 @@ function analyzeExpression(input: string, _lineNumber = 1): AnalysisResult {
     // Build symbol table
     const symbolTable = buildSymbolTable(lexResult.tokens);
 
-    // Parse
-    parserInstance.input = lexResult.tokens;
-    const cst = parserInstance.statement();
-    const lastToken = lexResult.tokens[lexResult.tokens.length - 1] as IToken | undefined;
-    const parseErrors = (parserInstance.errors || []).map((e: any) => {
-      const errToken: IToken | undefined = e?.token as IToken | undefined;
-      const isEOF = (errToken as any)?.tokenType?.name === 'EOF' || !errToken || (errToken as any)?.image === undefined;
-      const line = errToken?.startLine ?? lastToken?.endLine ?? lastToken?.startLine ?? 1;
-      const computedColumnFromLast = (lastToken?.endColumn ?? ((lastToken?.startColumn || 0) + ((lastToken?.image?.length || 1) - 1))) + 1;
-      let column = errToken?.startColumn ?? (isEOF ? computedColumnFromLast : 1);
-      if ((!column || column === 1) && lastToken) {
-        column = computedColumnFromLast;
-      }
-      const symbol = errToken?.image ?? (isEOF ? 'EOF' : undefined);
-      return {
-        message: e?.message,
-        line,
-        column,
-        type: 'syntactic' as const,
-        symbol
-      };
-    }) as ParseError[];
-
+    // Enhanced parsing with better error recovery
+    const parseResult = parseWithEnhancedErrorHandling(lexResult.tokens, input);
+    
+    // Combine pre-analysis errors with parse errors
+    const allErrors = [...preAnalysisErrors, ...parseResult.errors];
+    
     // Check if parsing was successful
-    const isValid = parseErrors.length === 0 && cst && cst.name;
+    const isValid = allErrors.length === 0 && parseResult.cst && parseResult.cst.name;
 
     // Prepare visualization lines
-    const treeLines = cstToIndentedLines(cst);
+    const treeLines = parseResult.cst ? cstToIndentedLines(parseResult.cst) : [];
 
     return {
       lexResult: { tokens: lexResult.tokens, errors: [] },
       symbolTable,
-      cst,
-      parseErrors,
+      cst: parseResult.cst,
+      parseErrors: allErrors,
       treeLines,
       isValid,
-      errorType: parseErrors.length > 0 ? 'syntactic' : null
+      errorType: allErrors.length > 0 ? (allErrors[0].type || 'syntactic') : null
     };
   } catch (error) {
     return {
@@ -262,6 +179,298 @@ function analyzeExpression(input: string, _lineNumber = 1): AnalysisResult {
     };
   }
 }
+
+function preAnalyzeInput(input: string): ParseError[] {
+  const errors: ParseError[] = [];
+  const chars = input.split('');
+  
+  // Check for operators at start or end
+  const operators = ['+', '-', '*', '/'];
+  const firstNonSpace = input.trim()[0];
+  const lastNonSpace = input.trim()[input.trim().length - 1];
+  
+  if (operators.includes(firstNonSpace)) {
+    const position = input.indexOf(firstNonSpace) + 1;
+    errors.push({
+      message: `Unexpected operator '${firstNonSpace}' at beginning of expression`,
+      line: 1,
+      column: position,
+      type: 'syntactic',
+      symbol: firstNonSpace
+    });
+  }
+  
+  if (operators.includes(lastNonSpace)) {
+    const position = input.lastIndexOf(lastNonSpace) + 1;
+    errors.push({
+      message: `Unexpected operator '${lastNonSpace}' at end of expression`,
+      line: 1,
+      column: position,
+      type: 'syntactic',
+      symbol: lastNonSpace
+    });
+  }
+  
+  // Check for consecutive operators
+  for (let i = 0; i < chars.length - 1; i++) {
+    const current = chars[i];
+    const next = chars[i + 1];
+    
+    if (operators.includes(current) && operators.includes(next)) {
+      errors.push({
+        message: `Consecutive operators '${current}${next}' are not allowed`,
+        line: 1,
+        column: i + 1,
+        type: 'syntactic',
+        symbol: current
+      });
+    }
+  }
+  
+  // Check for unmatched parentheses
+  let parenCount = 0;
+  const parenStack: { char: string; pos: number }[] = [];
+  
+  for (let i = 0; i < chars.length; i++) {
+    const char = chars[i];
+    if (char === '(') {
+      parenCount++;
+      parenStack.push({ char, pos: i + 1 });
+    } else if (char === ')') {
+      parenCount--;
+      if (parenCount < 0) {
+        errors.push({
+          message: `Unmatched closing parenthesis ')'`,
+          line: 1,
+          column: i + 1,
+          type: 'syntactic',
+          symbol: ')'
+        });
+        parenCount = 0; // Reset to continue checking
+      } else {
+        parenStack.pop();
+      }
+    }
+  }
+  
+  // Check for unclosed parentheses
+  parenStack.forEach(paren => {
+    errors.push({
+      message: `Unmatched opening parenthesis '('`,
+      line: 1,
+      column: paren.pos,
+      type: 'syntactic',
+      symbol: '('
+    });
+  });
+  
+  // Check for empty parentheses
+  const emptyParenPattern = /\(\s*\)/g;
+  let match;
+  while ((match = emptyParenPattern.exec(input)) !== null) {
+    errors.push({
+      message: `Empty parentheses '()' are not allowed`,
+      line: 1,
+      column: match.index + 1,
+      type: 'syntactic',
+      symbol: '()'
+    });
+  }
+  
+  // Check for invalid characters
+  const validChars = /^[a-zA-Z0-9+\-*/=()\s.]*$/;
+  if (!validChars.test(input)) {
+    for (let i = 0; i < chars.length; i++) {
+      const char = chars[i];
+      if (!/[a-zA-Z0-9+\-*/=()\s.]/.test(char)) {
+        errors.push({
+          message: `Invalid character '${char}'`,
+          line: 1,
+          column: i + 1,
+          type: 'lexical',
+          symbol: char
+        });
+      }
+    }
+  }
+  
+  return errors;
+}
+
+function parseWithEnhancedErrorHandling(tokens: IToken[], originalInput: string) {
+  const errors: ParseError[] = [];
+  let cst = null;
+  
+  try {
+    parserInstance.input = tokens;
+    cst = parserInstance.statement();
+    
+    // Get parser errors with enhanced messages
+    const parserErrors = (parserInstance.errors || []).map((e: any) => {
+      const errToken: IToken | undefined = e?.token as IToken | undefined;
+      const isEOF = (errToken as any)?.tokenType?.name === 'EOF' || !errToken || (errToken as any)?.image === undefined;
+      const lastToken = tokens[tokens.length - 1] as IToken | undefined;
+      const line = errToken?.startLine ?? lastToken?.endLine ?? lastToken?.startLine ?? 1;
+      const computedColumnFromLast = (lastToken?.endColumn ?? ((lastToken?.startColumn || 0) + ((lastToken?.image?.length || 1) - 1))) + 1;
+      let column = errToken?.startColumn ?? (isEOF ? computedColumnFromLast : 1);
+      if ((!column || column === 1) && lastToken) {
+        column = computedColumnFromLast;
+      }
+      const symbol = errToken?.image ?? (isEOF ? 'EOF' : undefined);
+      
+      // Generate user-friendly error message
+      const message = generateUserFriendlyErrorMessage(e, errToken, originalInput);
+      
+      return {
+        message,
+        line,
+        column,
+        type: 'syntactic' as const,
+        symbol
+      };
+    });
+    
+    errors.push(...parserErrors);
+    
+  } catch (parseError) {
+    errors.push({
+      message: `Parse error: ${(parseError as Error).message}`,
+      line: 1,
+      column: 1,
+      type: 'runtime',
+      symbol: undefined
+    });
+  }
+  
+  return { cst, errors };
+}
+
+function generateUserFriendlyErrorMessage(_error: any, token: IToken | undefined, originalInput: string): string {
+  const tokenImage = token?.image;
+  const tokenType = token?.tokenType?.name;
+  const position = token?.startColumn || 1;
+  const char = originalInput[position - 1];
+  
+  // Common error patterns with friendly messages
+  if (tokenImage === '*' || tokenImage === '/' || tokenImage === '+' || tokenImage === '-') {
+    if (position === 1) {
+      return `Expression cannot start with operator '${tokenImage}'`;
+    }
+    
+    const prevChar = originalInput[position - 2];
+    if (['+', '-', '*', '/'].includes(prevChar)) {
+      return `Consecutive operators '${prevChar}${tokenImage}' are not allowed`;
+    }
+    
+    if (position === originalInput.trim().length) {
+      return `Expression cannot end with operator '${tokenImage}'`;
+    }
+    
+    return `Unexpected operator '${tokenImage}' at position ${position}`;
+  }
+  
+  if (tokenImage === '(' || tokenImage === ')') {
+    if (tokenImage === ')') {
+      return `Unmatched closing parenthesis ')'`;
+    } else {
+      return `Unmatched opening parenthesis '('`;
+    }
+  }
+  
+  if (tokenType === 'EOF' || !tokenImage) {
+    const lastChar = originalInput.trim()[originalInput.trim().length - 1];
+    if (['+', '-', '*', '/'].includes(lastChar)) {
+      return `Expression cannot end with operator '${lastChar}'`;
+    }
+    return `Unexpected end of expression`;
+  }
+  
+  if (char && !/[a-zA-Z0-9+\-*/=()\s.]/.test(char)) {
+    return `Invalid character '${char}' at position ${position}`;
+  }
+  
+  // Default fallback message
+  return `Syntax error at position ${position}${tokenImage ? `: unexpected '${tokenImage}'` : ''}`;
+}
+
+// Enhanced parser class with better error recovery
+class EnhancedExpressionParser extends CstParser {
+  public assignment!: (idxInOriginal?: number) => any;
+  public statement!: (idxInOriginal?: number) => any;
+  public expression!: (idxInOriginal?: number) => any;
+  public expressionPrime!: (idxInOriginal?: number) => any;
+  public term!: (idxInOriginal?: number) => any;
+  public termPrime!: (idxInOriginal?: number) => any;
+  public factor!: (idxInOriginal?: number) => any;
+  
+  constructor() {
+    super(allTokens, { 
+      recoveryEnabled: true,
+      maxLookahead: 3
+    });
+
+    const $ = this;
+
+    $.RULE('statement', () => {
+      $.OR([
+        { ALT: () => { $.SUBRULE($.assignment); } },
+        { ALT: () => { $.SUBRULE($.expression); } }
+      ]);
+    });
+
+    $.RULE('assignment', () => {
+      $.CONSUME(Identifier);
+      $.CONSUME(Equals);
+      $.SUBRULE($.expression);
+    });
+
+    $.RULE('expression', () => {
+      $.SUBRULE($.term);
+      $.SUBRULE($.expressionPrime);
+    });
+
+    $.RULE('expressionPrime', () => {
+      $.MANY(() => {
+        $.OR([
+          { ALT: () => { $.CONSUME(Plus); } },
+          { ALT: () => { $.CONSUME(Minus); } }
+        ]);
+        $.SUBRULE2($.term);
+      });
+    });
+
+    $.RULE('term', () => {
+      $.SUBRULE($.factor);
+      $.SUBRULE($.termPrime);
+    });
+
+    $.RULE('termPrime', () => {
+      $.MANY(() => {
+        $.OR([
+          { ALT: () => { $.CONSUME(Multiply); } },
+          { ALT: () => { $.CONSUME(Divide); } }
+        ]);
+        $.SUBRULE2($.factor);
+      });
+    });
+
+    $.RULE('factor', () => {
+      $.OR([
+        { ALT: () => { $.CONSUME(NumberLiteral); } },
+        { ALT: () => { $.CONSUME(Identifier); } },
+        { ALT: () => { 
+          $.CONSUME(LParen); 
+          $.SUBRULE($.expression); 
+          $.CONSUME(RParen); 
+        } }
+      ]);
+    });
+
+    this.performSelfAnalysis();
+  }
+}
+
+const parserInstance = new EnhancedExpressionParser();
 
 // History management removed per request
 
