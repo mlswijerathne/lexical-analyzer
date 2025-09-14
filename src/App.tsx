@@ -1,9 +1,12 @@
 import { useState } from 'react';
-import jsPDF from 'jspdf';
 import EditorPane from './components/EditorPane';
 import ResultsPanel from './components/ResultsPanel';
 import SidebarStats from './components/SidebarStats';
+import HistoryPanel from './components/HistoryPanel';
+import Button from './components/Button';
 import { ClockIcon } from '@heroicons/react/24/solid';
+import { addToHistory, type HistorySummary } from './utils/history';
+import { generatePdf } from './components/PdfExporter';
 import { createToken, Lexer, CstParser, type IToken } from 'chevrotain';
 
 // -------------------- Define Tokens --------------------
@@ -480,7 +483,7 @@ const parserInstance = new EnhancedExpressionParser();
 export default function CompilerPlayground() {
   const [input, setInput] = useState<string>('3 + 4 * 5\n(a + b) * c\nx + y + z');
   const [results, setResults] = useState<AnalysisResult[] | null>(null);
-  // History state removed
+  const [showHistory, setShowHistory] = useState<boolean>(false);
   const [processing, setProcessing] = useState<boolean>(false);
   // Removed Grammar feature per request
 
@@ -494,6 +497,19 @@ export default function CompilerPlayground() {
     setTimeout(() => {
       const multilineResults = processMultilineInput(input);
       setResults(multilineResults);
+      // Build a small summary and add to history (store input and stats)
+      try {
+        const summary: HistorySummary = multilineResults.reduce((acc, r) => ({
+          tokens: acc.tokens + r.lexResult.tokens.length,
+          symbols: acc.symbols + r.symbolTable.length,
+          errors: acc.errors + r.parseErrors.length,
+          valid: acc.valid + (r.isValid ? 1 : 0)
+        }), { tokens: 0, symbols: 0, errors: 0, valid: 0 });
+
+        addToHistory({ input, summary });
+      } catch (e) {
+        // ignore history errors
+      }
       setProcessing(false);
     }, 300);
   };
@@ -506,75 +522,8 @@ export default function CompilerPlayground() {
 
   const downloadReport = () => {
     if (!results) return;
-
-    const doc = new jsPDF({ unit: 'pt', format: 'a4' });
-    const pageWidth = doc.internal.pageSize.getWidth();
-    const margin = 40;
-    const lineHeight = 14;
-    let y = margin;
-
-    const writeLine = (text: string, indent = 0) => {
-      const maxWidth = pageWidth - margin * 2 - indent;
-      const lines: string[] = doc.splitTextToSize(text, maxWidth) as string[];
-      lines.forEach((ln: string) => {
-        if (y > doc.internal.pageSize.getHeight() - margin) {
-          doc.addPage();
-          y = margin;
-        }
-        doc.text(ln, margin + indent, y);
-        y += lineHeight;
-      });
-    };
-
-    doc.setFont('helvetica', 'bold');
-    writeLine('LEXICAL ANALYZER & PARSER REPORT');
-    doc.setFont('helvetica', 'normal');
-    writeLine(`Generated: ${new Date().toLocaleString()}`);
-    y += 6;
-
-    results.forEach((result) => {
-      doc.setFont('helvetica', 'bold');
-      writeLine(`=== LINE ${result.line}: "${result.input}" ===`);
-      doc.setFont('helvetica', 'normal');
-      writeLine(`Status: ${result.isValid ? 'ACCEPTED' : 'REJECTED'}`);
-      y += 6;
-
-      writeLine('TOKENS:');
-      result.lexResult.tokens.forEach(t => {
-        writeLine(`${t.image} : ${t.tokenType.name} (Line ${t.startLine || 1}, Column ${t.startColumn || 1})`, 16);
-      });
-
-      y += 6;
-      writeLine('SYMBOL TABLE:');
-      if (result.symbolTable.length === 0) {
-        writeLine('None', 16);
-      } else {
-        writeLine('ID  LEXEME  TYPE  LINE  COLUMN  LENGTH  SCOPE', 16);
-        result.symbolTable.forEach(s => {
-          writeLine(`${s.id}  ${s.lexeme}  ${s.type}  ${s.line}  ${s.column}  ${s.length}  ${s.scope}`, 16);
-        });
-      }
-
-      y += 6;
-      writeLine('PARSE TREE:');
-      if (result.treeLines.length > 0) {
-        result.treeLines.forEach(line => writeLine(line, 16));
-      } else {
-        writeLine('No parse tree (parsing failed)', 16);
-      }
-
-      y += 6;
-      writeLine('ERRORS:');
-      if (result.parseErrors.length > 0) {
-        result.parseErrors.forEach(e => writeLine(`${e.type?.toUpperCase() || 'ERROR'} at line ${result.line}, column ${e.column || 1}${e.symbol ? `, symbol "${e.symbol}"` : ''}: ${e.message || JSON.stringify(e)}`, 16));
-      } else {
-        writeLine('None', 16);
-      }
-
-      y += lineHeight;
-    });
-
-    doc.save(`compiler_report_${new Date().toISOString().split('T')[0]}.pdf`);
+    // Call centralized PDF generator, request single-page compact export
+    generatePdf({ results, input, grammarRules: [], singlePage: true });
   };
 
   // markers handled in EditorPane
@@ -597,6 +546,17 @@ export default function CompilerPlayground() {
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: '#1e1e1e', color: '#d4d4d4' }}>
+      {/* History Panel */}
+      {showHistory && (
+        <HistoryPanel 
+          onClose={() => setShowHistory(false)} 
+          onSelectItem={(historyInput) => {
+            setInput(historyInput);
+            setShowHistory(false);
+          }} 
+        />
+      )}
+      
       {/* Header */}
       <div className="border-b" style={{ backgroundColor: '#252526', borderColor: '#333' }}>
         <div className="max-w-7xl mx-auto px-6 py-4">
@@ -606,14 +566,14 @@ export default function CompilerPlayground() {
               <p style={{ color: '#9aa0a6' }}>Professional Lexical Analyzer & Parser with Chevrotain</p>
             </div>
             <div className="flex gap-2">
-              <button
-                onClick={() => { /* no-op */ }}
-                className="px-4 py-2 rounded-lg transition-colors flex items-center gap-2"
-                style={{ backgroundColor: '#0e639c', color: 'white' }}
+              <Button
+                onClick={() => setShowHistory(true)}
+                iconLeft={<ClockIcon className="h-4 w-4" />}
+                variant="primary"
+                size="md"
               >
-                <ClockIcon className="h-4 w-4" />
                 History
-              </button>
+              </Button>
             </div>
           </div>
         </div>

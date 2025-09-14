@@ -1,6 +1,7 @@
 import Editor from '@monaco-editor/react';
 import { PlayIcon, ArrowDownTrayIcon, DocumentDuplicateIcon } from '@heroicons/react/24/solid';
 import { useEffect, useState } from 'react';
+import Button from './Button';
 
 type ParseError = { message?: string; line?: number; column?: number; type?: 'lexical' | 'syntactic' | 'runtime'; symbol?: string };
 type AnalysisResult = {
@@ -67,13 +68,13 @@ export default function EditorPane({
       <div className="flex items-center justify-between mb-4">
         <label className="text-lg font-semibold">Input Expressions</label>
         <div className="flex gap-2">
-          <button
+          <Button 
             onClick={() => copyToClipboard(input)}
-            className="px-3 py-1 border rounded-lg transition-colors"
-            style={{ borderColor: '#3c3c3c' }}
-          >
-            <DocumentDuplicateIcon className="h-4 w-4" />
-          </button>
+            variant="secondary"
+            size="sm"
+            iconLeft={<DocumentDuplicateIcon className="h-4 w-4" />}
+            aria-label="Copy to clipboard"
+          />
         </div>
       </div>
 
@@ -104,24 +105,24 @@ export default function EditorPane({
 
       <div className="flex items-center justify-between mt-4">
         <div className="flex gap-3">
-          <button
+          <Button
             onClick={analyze}
             disabled={processing || !input.trim()}
-            className="px-6 py-3 text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center gap-2 font-medium"
-            style={{ backgroundColor: '#0e639c' }}
+            iconLeft={<PlayIcon className="h-4 w-4" />}
+            variant="primary"
+            size="lg"
           >
-            <PlayIcon className="h-4 w-4" />
             {processing ? 'Analyzing...' : 'Analyze'}
-          </button>
-          <button
+          </Button>
+          <Button
             onClick={downloadReport}
             disabled={!results}
-            className="px-4 py-3 text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
-            style={{ backgroundColor: '#388a34' }}
+            iconLeft={<ArrowDownTrayIcon className="h-4 w-4" />}
+            variant="success"
+            size="md"
           >
-            <ArrowDownTrayIcon className="h-4 w-4" />
             Download Report
-          </button>
+          </Button>
         </div>
         <div className="text-sm" style={{ color: '#9aa0a6' }}>
           Lines: {input.split('\n').filter(l => l.trim()).length}
