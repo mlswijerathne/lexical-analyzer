@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import EditorPane from './components/EditorPane';
+import EditorPane from './components/EditorPanel';
 import ResultsPanel from './components/ResultsPanel';
 import SidebarStats from './components/SidebarStats';
 import HistoryPanel from './components/HistoryPanel';
