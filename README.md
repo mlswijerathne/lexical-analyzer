@@ -8,7 +8,6 @@ A modern web application for lexical analysis and tokenization, built with React
 - **Token Analysis**: Comprehensive lexical analysis with detailed token breakdown
 - **History Management**: Track and review previous analysis sessions
 - **PDF Export**: Generate professional reports of analysis results
-- **Statistics Dashboard**: View analysis metrics and performance data
 - **Responsive Design**: Optimized for desktop and mobile devices
 
 ## Technology Stack
