@@ -1,74 +1,79 @@
-# Lexical Analyzer (React + TypeScript)
+# Lexical Analyzer
 
-A small web app for experimenting with lexical analysis and tokenization, built with React, TypeScript and Vite.
-
-This repository provides a browser-based UI to paste or type source text, run a lexical analysis/tokenization step, review results and history, and export output to PDF.
+A modern web application for lexical analysis and tokenization, built with React and TypeScript. This tool provides an intuitive interface for analyzing source code and text, generating detailed tokenization results with export capabilities.
 
 ## Features
 
-- Live editor pane to enter source text
-- Tokenization / lexical analysis results panel
-- History panel to view past analyses
-- Export results to PDF
-- Simple, component-based code structure for easy extension
+- **Interactive Editor**: Real-time code editing with syntax highlighting
+- **Token Analysis**: Comprehensive lexical analysis with detailed token breakdown
+- **History Management**: Track and review previous analysis sessions
+- **PDF Export**: Generate professional reports of analysis results
+- **Statistics Dashboard**: View analysis metrics and performance data
+- **Responsive Design**: Optimized for desktop and mobile devices
 
-## Tech stack
+## Technology Stack
 
-- React + TypeScript
-- Vite (development server + build)
+- **Frontend**: React 19 with TypeScript
+- **Build Tool**: Vite 7
+- **Styling**: Tailwind CSS 4
+- **Package Manager**: pnpm
+- **Code Quality**: ESLint with TypeScript support
+
+## Project Structure
+
+```
+src/
+├── components/          # Reusable UI components
+│   ├── Button.tsx
+│   ├── EditorPane.tsx
+│   ├── ResultsPanel.tsx
+│   ├── HistoryPanel.tsx
+│   ├── PdfExporter.tsx
+│   └── SidebarStats.tsx
+├── utils/              # Utility functions
+│   └── history.ts
+├── App.tsx             # Main application component
+├── main.tsx            # Application entry point
+└── index.css           # Global styles
+```
+
+## Quick Start
+
+### Prerequisites
+
+- Node.js 18+ (LTS recommended)
 - pnpm (recommended package manager)
 
-## Project structure
+### Installation
 
-Key files and folders:
+```bash
+# Clone the repository
+git clone https://github.com/mlswijerathne/lexical-analyzer.git
 
-- `src/` - application source
-	- `main.tsx` - app entry
-	- `App.tsx` - root component
-	- `components/` - UI components (Button, EditorPane, ResultsPanel, HistoryPanel, PdfExporter, SidebarStats)
-	- `utils/` - helper modules (e.g. `history.ts`)
-- `index.html` - HTML template used by Vite
-- `vite.config.ts` - Vite configuration
-- `tsconfig.json` / `tsconfig.*.json` - TypeScript configuration
+cd lexical-analyzer
 
-## Getting started
-
-Requirements:
-
-- Node.js 16+ (or compatible LTS)
-- pnpm (recommended) — if you use npm or yarn adjust commands accordingly
-
-Install dependencies:
-
-```powershell
+# Install dependencies
 pnpm install
+
+# Start development server
+pnpm dev
 ```
 
-Run the development server:
+The application will be available at `http://localhost:5173`.
 
-```powershell
-pnpm run dev
-```
+### Available Scripts
 
-Open `http://localhost:5173` (or the URL printed by Vite) to view the app.
-
-Build for production:
-
-```powershell
-pnpm run build
-```
-
-Preview the production build locally:
-
-```powershell
-pnpm run preview
-```
-
-Run tests (if present):
-
-```powershell
-pnpm test
-```
+- `pnpm dev` - Start development server
+- `pnpm build` - Build for production
+- `pnpm preview` - Preview production build
+- `pnpm lint` - Run ESLint
 
 
+## Usage
+
+1. **Input Source Code**: Paste or type your source code in the editor pane
+2. **Run Analysis**: Click the analyze button to perform lexical analysis
+3. **Review Results**: Examine the tokenization results in the results panel
+4. **Export Data**: Generate PDF reports or save analysis history
+5. **Track Progress**: Monitor analysis statistics in the sidebar
 
