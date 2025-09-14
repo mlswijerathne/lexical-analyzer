@@ -3,7 +3,10 @@ import jsPDF from 'jspdf';
 import EditorPane from './components/EditorPane';
 import ResultsPanel from './components/ResultsPanel';
 import SidebarStats from './components/SidebarStats';
+import HistoryPanel from './components/HistoryPanel';
+import Button from './components/Button';
 import { ClockIcon } from '@heroicons/react/24/solid';
+import { addToHistory, type HistorySummary } from './utils/history';
 import { createToken, Lexer, CstParser, type IToken } from 'chevrotain';
 
 // -------------------- Define Tokens --------------------
@@ -480,7 +483,7 @@ const parserInstance = new EnhancedExpressionParser();
 export default function CompilerPlayground() {
   const [input, setInput] = useState<string>('3 + 4 * 5\n(a + b) * c\nx + y + z');
   const [results, setResults] = useState<AnalysisResult[] | null>(null);
-  // History state removed
+  const [showHistory, setShowHistory] = useState<boolean>(false);
   const [processing, setProcessing] = useState<boolean>(false);
   // Removed Grammar feature per request
 
@@ -494,6 +497,19 @@ export default function CompilerPlayground() {
     setTimeout(() => {
       const multilineResults = processMultilineInput(input);
       setResults(multilineResults);
+      // Build a small summary and add to history (store input and stats)
+      try {
+        const summary: HistorySummary = multilineResults.reduce((acc, r) => ({
+          tokens: acc.tokens + r.lexResult.tokens.length,
+          symbols: acc.symbols + r.symbolTable.length,
+          errors: acc.errors + r.parseErrors.length,
+          valid: acc.valid + (r.isValid ? 1 : 0)
+        }), { tokens: 0, symbols: 0, errors: 0, valid: 0 });
+
+        addToHistory({ input, summary });
+      } catch (e) {
+        // ignore history errors
+      }
       setProcessing(false);
     }, 300);
   };
@@ -597,6 +613,17 @@ export default function CompilerPlayground() {
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: '#1e1e1e', color: '#d4d4d4' }}>
+      {/* History Panel */}
+      {showHistory && (
+        <HistoryPanel 
+          onClose={() => setShowHistory(false)} 
+          onSelectItem={(historyInput) => {
+            setInput(historyInput);
+            setShowHistory(false);
+          }} 
+        />
+      )}
+      
       {/* Header */}
       <div className="border-b" style={{ backgroundColor: '#252526', borderColor: '#333' }}>
         <div className="max-w-7xl mx-auto px-6 py-4">
@@ -606,14 +633,14 @@ export default function CompilerPlayground() {
               <p style={{ color: '#9aa0a6' }}>Professional Lexical Analyzer & Parser with Chevrotain</p>
             </div>
             <div className="flex gap-2">
-              <button
-                onClick={() => { /* no-op */ }}
-                className="px-4 py-2 rounded-lg transition-colors flex items-center gap-2"
-                style={{ backgroundColor: '#0e639c', color: 'white' }}
+              <Button
+                onClick={() => setShowHistory(true)}
+                iconLeft={<ClockIcon className="h-4 w-4" />}
+                variant="primary"
+                size="md"
               >
-                <ClockIcon className="h-4 w-4" />
                 History
-              </button>
+              </Button>
             </div>
           </div>
         </div>
