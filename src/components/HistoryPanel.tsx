@@ -43,11 +43,22 @@ export default function HistoryPanel({ onClose, onSelectItem }: HistoryPanelProp
     }
   };
 
-  // Format input preview (truncate if too long)
+  // Format input preview (truncate if too long, preserve line breaks)
   const formatInput = (input: string) => {
-    const maxLength = 50;
-    if (input.length <= maxLength) return input;
-    return input.substring(0, maxLength) + '...';
+    const maxLength = 150;
+    const lines = input.split('\n');
+    const truncatedLines = lines.map(line => {
+      if (line.length <= maxLength) return line;
+      return line.substring(0, maxLength) + '...';
+    });
+    
+    // Limit to max 3 lines with indication if there are more
+    const maxLines = 3;
+    if (truncatedLines.length > maxLines) {
+      return truncatedLines.slice(0, maxLines).join('\n') + '\n...';
+    }
+    
+    return truncatedLines.join('\n');
   };
 
   return (
@@ -121,7 +132,14 @@ export default function HistoryPanel({ onClose, onSelectItem }: HistoryPanelProp
                 >
                   <div className="flex justify-between items-start">
                     <div>
-                      <div className="font-mono text-sm mb-2" style={{ color: '#CEA47C' }}>
+                      <div 
+                        className="font-mono text-sm mb-2" 
+                        style={{ 
+                          color: '#CEA47C',
+                          whiteSpace: 'pre-wrap',
+                          overflowWrap: 'break-word'
+                        }}
+                      >
                         {formatInput(item.input)}
                       </div>
                       <div className="text-xs" style={{ color: '#9aa0a6' }}>
