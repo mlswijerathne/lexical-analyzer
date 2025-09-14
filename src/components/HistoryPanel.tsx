@@ -63,22 +63,26 @@ export default function HistoryPanel({ onClose, onSelectItem }: HistoryPanelProp
 
   return (
     <div 
-      className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+      className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50"
       onClick={(e) => {
         // Close when clicking the backdrop
         if (e.target === e.currentTarget) onClose();
       }}
     >
       <div 
-        className="relative rounded-xl shadow-xl max-w-3xl w-full mx-4 max-h-[80vh] flex flex-col"
-        style={{ backgroundColor: '#252526', color: '#d4d4d4', border: '1px solid #2d2d2d' }}
+        className="relative rounded-xl shadow-xl max-w-3xl w-full mx-4 max-h-[80vh] flex flex-col bg-gradient-to-br from-gray-800 to-gray-900 border border-gray-700/50"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b" style={{ borderColor: '#333' }}>
-          <div className="flex items-center gap-2">
-            <ClockIcon className="h-5 w-5" style={{ color: '#0e639c' }} />
-            <h2 className="text-xl font-bold" style={{ color: '#e7e7e7' }}>Lexical Analysis History</h2>
+        <div className="flex items-center justify-between p-6 border-b border-gray-700/50">
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-blue-500/20">
+              <ClockIcon className="h-6 w-6 text-blue-400" />
+            </div>
+            <div>
+              <h2 className="text-xl font-semibold text-white">Analysis History</h2>
+              <p className="text-gray-400 text-sm">Your recent lexical analysis sessions</p>
+            </div>
           </div>
           <div className="flex gap-2">
             <Button
@@ -95,7 +99,7 @@ export default function HistoryPanel({ onClose, onSelectItem }: HistoryPanelProp
               size="sm"
               title="Clear All History"
               disabled={history.length === 0}
-              iconLeft={<TrashIcon className="h-5 w-5" style={{ color: history.length === 0 ? '#555' : '#F44747' }} />}
+              iconLeft={<TrashIcon className="h-5 w-5" />}
               aria-label="Clear history"
             />
             <Button
@@ -117,52 +121,52 @@ export default function HistoryPanel({ onClose, onSelectItem }: HistoryPanelProp
             </div>
           ) : history.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-32 text-center">
-              <ClockIcon className="h-12 w-12 mb-4" style={{ color: '#555' }} />
-              <p style={{ color: '#9aa0a6' }}>No history found</p>
-              <p className="text-sm" style={{ color: '#666' }}>Analyze expressions to create history entries</p>
+              <ClockIcon className="h-12 w-12 mb-4 text-gray-500" />
+              <p className="text-gray-400">No history found</p>
+              <p className="text-sm text-gray-500">Analyze expressions to create history entries</p>
             </div>
           ) : (
-            <ul className="space-y-2">
+            <ul className="space-y-3">
               {history.map((item) => (
                 <li 
                   key={item.id} 
-                  className="border rounded-lg p-4 cursor-pointer transition-colors"
-                  style={{ borderColor: '#333', backgroundColor: '#1e1e1e' }}
+                  className="border border-gray-600/50 rounded-lg p-4 cursor-pointer transition-all hover:border-gray-500/50 hover:bg-gray-700/30 bg-gray-800/30"
                   onClick={() => onSelectItem(item.input)}
                 >
                   <div className="flex justify-between items-start">
-                    <div>
+                    <div className="flex-1 min-w-0">
                       <div 
-                        className="font-mono text-sm mb-2" 
-                        style={{ 
-                          color: '#CEA47C',
+                        className="font-mono text-sm mb-2 text-gray-300 truncate"
+                        style={{
                           whiteSpace: 'pre-wrap',
                           overflowWrap: 'break-word'
                         }}
                       >
                         {formatInput(item.input)}
                       </div>
-                      <div className="text-xs" style={{ color: '#9aa0a6' }}>
+                      <div className="text-xs text-gray-500">
                         {formatDate(item.timestamp)}
                       </div>
                     </div>
                     {item.summary && (
-                      <div className="flex gap-3 text-xs">
-                        <div title="Tokens">
-                          <span style={{ color: '#9aa0a6' }}>Tokens: </span>
-                          <span>{item.summary.tokens}</span>
+                      <div className="flex gap-3 text-xs flex-shrink-0">
+                        <div title="Tokens" className="text-center">
+                          <div className="text-blue-400 font-semibold">{item.summary.tokens}</div>
+                          <div className="text-gray-500">Tokens</div>
                         </div>
-                        <div title="Symbols">
-                          <span style={{ color: '#9aa0a6' }}>Symbols: </span>
-                          <span>{item.summary.symbols}</span>
+                        <div title="Symbols" className="text-center">
+                          <div className="text-purple-400 font-semibold">{item.summary.symbols}</div>
+                          <div className="text-gray-500">Symbols</div>
                         </div>
-                        <div title="Valid Expressions">
-                          <span style={{ color: '#9aa0a6' }}>Valid: </span>
-                          <span style={{ color: '#6A9955' }}>{item.summary.valid}</span>
+                        <div title="Valid Expressions" className="text-center">
+                          <div className="text-green-400 font-semibold">{item.summary.valid}</div>
+                          <div className="text-gray-500">Valid</div>
                         </div>
-                        <div title="Errors">
-                          <span style={{ color: '#9aa0a6' }}>Errors: </span>
-                          <span style={{ color: item.summary.errors > 0 ? '#F14C4C' : '#6A9955' }}>{item.summary.errors}</span>
+                        <div title="Errors" className="text-center">
+                          <div className={`font-semibold ${item.summary.errors > 0 ? 'text-red-400' : 'text-green-400'}`}>
+                            {item.summary.errors}
+                          </div>
+                          <div className="text-gray-500">Errors</div>
                         </div>
                       </div>
                     )}
