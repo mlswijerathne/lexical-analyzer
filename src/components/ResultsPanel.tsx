@@ -1,5 +1,5 @@
 import { CheckCircleIcon, ExclamationCircleIcon, ChevronDownIcon, ChevronRightIcon } from '@heroicons/react/24/solid';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 type SymbolRow = {
   id: number;
@@ -50,11 +50,29 @@ const getErrorColor = (errorType: string): string => {
 };
 
 export default function ResultsPanel({ results }: { results: AnalysisResult[] }) {
-  const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({});
+  // Initialize with error rows expanded automatically
+  const [expandedRows, setExpandedRows] = useState<Record<number, boolean>>(() => {
+    const initial: Record<number, boolean> = {};
+    results.forEach((result, index) => {
+      // Auto-expand if there are parse errors or if the result is invalid
+      initial[index] = result.parseErrors.length > 0 || !result.isValid;
+    });
+    return initial;
+  });
 
-  const toggleSection = (key: string) => {
-    setExpandedSections(prev => ({ ...prev, [key]: !prev[key] }));
+  const toggleRow = (index: number) => {
+    setExpandedRows(prev => ({ ...prev, [index]: !prev[index] }));
   };
+
+  // Update expanded state when results change
+  useEffect(() => {
+    const newExpanded: Record<number, boolean> = {};
+    results.forEach((result, index) => {
+      // Auto-expand if there are parse errors or if the result is invalid
+      newExpanded[index] = result.parseErrors.length > 0 || !result.isValid;
+    });
+    setExpandedRows(newExpanded);
+  }, [results]);
 
   const totalStats = results.reduce((acc, result) => ({
     tokens: acc.tokens + result.lexResult.tokens.length,
@@ -109,6 +127,19 @@ export default function ResultsPanel({ results }: { results: AnalysisResult[] })
                       REJECTED
                     </span>
                   )}
+                  <button
+                    onClick={() => toggleRow(index)}
+                    className="flex items-center gap-2 px-3 py-1 text-white hover:text-blue-400 transition-colors bg-gray-700/50 rounded-md border border-gray-600/30"
+                  >
+                    {expandedRows[index] ? (
+                      <ChevronDownIcon className="h-4 w-4" />
+                    ) : (
+                      <ChevronRightIcon className="h-4 w-4" />
+                    )}
+                    <span className="text-sm font-medium">
+                      {expandedRows[index] ? 'Hide Details' : 'Show Details'}
+                    </span>
+                  </button>
                 </div>
               </div>
 
@@ -142,20 +173,12 @@ export default function ResultsPanel({ results }: { results: AnalysisResult[] })
                 </div>
               )}
 
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-                <div>
-                  <button
-                    onClick={() => toggleSection(`tokens-${index}`)}
-                    className="flex items-center gap-2 w-full text-left mb-3 text-white hover:text-blue-400 transition-colors"
-                  >
-                    {expandedSections[`tokens-${index}`] ? (
-                      <ChevronDownIcon className="h-4 w-4" />
-                    ) : (
-                      <ChevronRightIcon className="h-4 w-4" />
-                    )}
-                    <h5 className="font-medium">Tokens ({result.lexResult.tokens.length})</h5>
-                  </button>
-                  {expandedSections[`tokens-${index}`] && (
+              {expandedRows[index] && (
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                  <div>
+                    <h5 className="font-medium text-white mb-3 flex items-center gap-2">
+                      <span className="text-blue-400">Tokens ({result.lexResult.tokens.length})</span>
+                    </h5>
                     <div className="bg-gray-900/50 rounded-lg p-3 max-h-48 overflow-auto border border-gray-600/30">
                       {result.lexResult.tokens.map((token, i) => (
                         <div key={i} className="text-sm font-mono flex items-center justify-between py-1">
@@ -169,22 +192,12 @@ export default function ResultsPanel({ results }: { results: AnalysisResult[] })
                         </div>
                       ))}
                     </div>
-                  )}
-                </div>
+                  </div>
 
-                <div>
-                  <button
-                    onClick={() => toggleSection(`symbols-${index}`)}
-                    className="flex items-center gap-2 w-full text-left mb-3 text-white hover:text-purple-400 transition-colors"
-                  >
-                    {expandedSections[`symbols-${index}`] ? (
-                      <ChevronDownIcon className="h-4 w-4" />
-                    ) : (
-                      <ChevronRightIcon className="h-4 w-4" />
-                    )}
-                    <h5 className="font-medium">Symbols ({result.symbolTable.length})</h5>
-                  </button>
-                  {expandedSections[`symbols-${index}`] && (
+                  <div>
+                    <h5 className="font-medium text-white mb-3 flex items-center gap-2">
+                      <span className="text-purple-400">Symbols ({result.symbolTable.length})</span>
+                    </h5>
                     <div className="bg-gray-900/50 rounded-lg p-3 max-h-48 overflow-auto border border-gray-600/30">
                       {result.symbolTable.length > 0 ? (
                         <div className="text-sm">
@@ -210,22 +223,12 @@ export default function ResultsPanel({ results }: { results: AnalysisResult[] })
                         <div className="text-sm text-gray-500">No symbols detected</div>
                       )}
                     </div>
-                  )}
-                </div>
+                  </div>
 
-                <div>
-                  <button
-                    onClick={() => toggleSection(`tree-${index}`)}
-                    className="flex items-center gap-2 w-full text-left mb-3 text-white hover:text-green-400 transition-colors"
-                  >
-                    {expandedSections[`tree-${index}`] ? (
-                      <ChevronDownIcon className="h-4 w-4" />
-                    ) : (
-                      <ChevronRightIcon className="h-4 w-4" />
-                    )}
-                    <h5 className="font-medium">Parse Tree</h5>
-                  </button>
-                  {expandedSections[`tree-${index}`] && (
+                  <div>
+                    <h5 className="font-medium text-white mb-3 flex items-center gap-2">
+                      <span className="text-green-400">Parse Tree</span>
+                    </h5>
                     <div className="bg-gray-900/50 rounded-lg p-3 max-h-48 overflow-auto border border-gray-600/30">
                       {result.treeLines.length > 0 ? (
                         <pre className="text-sm font-mono text-gray-300 whitespace-pre-wrap">
@@ -235,9 +238,9 @@ export default function ResultsPanel({ results }: { results: AnalysisResult[] })
                         <div className="text-sm text-gray-500">No parse tree available</div>
                       )}
                     </div>
-                  )}
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
           </div>
         ))}

@@ -578,15 +578,8 @@ export default function CompilerPlayground() {
                 Compiler Playground
               </h1>
               <p className="text-lg mt-2" style={{ color: '#b4b7bd' }}>
-                Professional Lexical Analyzer & Parser with Chevrotain
+                Professional Lexical Analyzer & Parser
               </p>
-              <div className="flex gap-4 mt-3 text-sm" style={{ color: '#7c8285' }}>
-                <span className="flex items-center gap-1">Real-time Analysis</span>
-                <span role="separator" aria-hidden className="inline-block h-4 w-px bg-gray-600/50 mx-2" />
-                <span className="flex items-center gap-1">Error Detection</span>
-                <span role="separator" aria-hidden className="inline-block h-4 w-px bg-gray-600/50 mx-2" />
-                <span className="flex items-center gap-1">Symbol Table Generation</span>
-              </div>
             </div>
             <div className="flex gap-3">
               <Button
