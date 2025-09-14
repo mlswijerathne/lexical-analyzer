@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import jsPDF from 'jspdf';
 import EditorPane from './components/EditorPane';
 import ResultsPanel from './components/ResultsPanel';
 import SidebarStats from './components/SidebarStats';
@@ -7,6 +6,7 @@ import HistoryPanel from './components/HistoryPanel';
 import Button from './components/Button';
 import { ClockIcon } from '@heroicons/react/24/solid';
 import { addToHistory, type HistorySummary } from './utils/history';
+import { generatePdf } from './components/PdfExporter';
 import { createToken, Lexer, CstParser, type IToken } from 'chevrotain';
 
 // -------------------- Define Tokens --------------------
@@ -522,75 +522,8 @@ export default function CompilerPlayground() {
 
   const downloadReport = () => {
     if (!results) return;
-
-    const doc = new jsPDF({ unit: 'pt', format: 'a4' });
-    const pageWidth = doc.internal.pageSize.getWidth();
-    const margin = 40;
-    const lineHeight = 14;
-    let y = margin;
-
-    const writeLine = (text: string, indent = 0) => {
-      const maxWidth = pageWidth - margin * 2 - indent;
-      const lines: string[] = doc.splitTextToSize(text, maxWidth) as string[];
-      lines.forEach((ln: string) => {
-        if (y > doc.internal.pageSize.getHeight() - margin) {
-          doc.addPage();
-          y = margin;
-        }
-        doc.text(ln, margin + indent, y);
-        y += lineHeight;
-      });
-    };
-
-    doc.setFont('helvetica', 'bold');
-    writeLine('LEXICAL ANALYZER & PARSER REPORT');
-    doc.setFont('helvetica', 'normal');
-    writeLine(`Generated: ${new Date().toLocaleString()}`);
-    y += 6;
-
-    results.forEach((result) => {
-      doc.setFont('helvetica', 'bold');
-      writeLine(`=== LINE ${result.line}: "${result.input}" ===`);
-      doc.setFont('helvetica', 'normal');
-      writeLine(`Status: ${result.isValid ? 'ACCEPTED' : 'REJECTED'}`);
-      y += 6;
-
-      writeLine('TOKENS:');
-      result.lexResult.tokens.forEach(t => {
-        writeLine(`${t.image} : ${t.tokenType.name} (Line ${t.startLine || 1}, Column ${t.startColumn || 1})`, 16);
-      });
-
-      y += 6;
-      writeLine('SYMBOL TABLE:');
-      if (result.symbolTable.length === 0) {
-        writeLine('None', 16);
-      } else {
-        writeLine('ID  LEXEME  TYPE  LINE  COLUMN  LENGTH  SCOPE', 16);
-        result.symbolTable.forEach(s => {
-          writeLine(`${s.id}  ${s.lexeme}  ${s.type}  ${s.line}  ${s.column}  ${s.length}  ${s.scope}`, 16);
-        });
-      }
-
-      y += 6;
-      writeLine('PARSE TREE:');
-      if (result.treeLines.length > 0) {
-        result.treeLines.forEach(line => writeLine(line, 16));
-      } else {
-        writeLine('No parse tree (parsing failed)', 16);
-      }
-
-      y += 6;
-      writeLine('ERRORS:');
-      if (result.parseErrors.length > 0) {
-        result.parseErrors.forEach(e => writeLine(`${e.type?.toUpperCase() || 'ERROR'} at line ${result.line}, column ${e.column || 1}${e.symbol ? `, symbol "${e.symbol}"` : ''}: ${e.message || JSON.stringify(e)}`, 16));
-      } else {
-        writeLine('None', 16);
-      }
-
-      y += lineHeight;
-    });
-
-    doc.save(`compiler_report_${new Date().toISOString().split('T')[0]}.pdf`);
+    // Call centralized PDF generator, request single-page compact export
+    generatePdf({ results, input, grammarRules: [], singlePage: true });
   };
 
   // markers handled in EditorPane
