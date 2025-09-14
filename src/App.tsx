@@ -523,7 +523,7 @@ export default function CompilerPlayground() {
   const downloadReport = () => {
     if (!results) return;
     // Call centralized PDF generator, request single-page compact export
-    generatePdf({ results, input, grammarRules: [], singlePage: true });
+    generatePdf({ results, input, singlePage: true });
   };
 
   // markers handled in EditorPane
