@@ -24,7 +24,7 @@ type GeneratePdfArgs = {
 };
 
 //Generate a well-structured PDF report for the lexical analyzer.
-export async function generatePdf({ results, input = '', grammarRules = [], appName = 'Lexical Analyzer', singlePage = false }: GeneratePdfArgs) {
+export async function generatePdf({ results, input = '', appName = 'Lexical Analyzer', singlePage = false }: GeneratePdfArgs) {
   if (!results || results.length === 0) return;
 
   const doc = new jsPDF({ unit: 'pt', format: 'a4' });
@@ -120,24 +120,6 @@ export async function generatePdf({ results, input = '', grammarRules = [], appN
   badgeX = badge('Errors:', String(totals.errors), badgeX);
   badgeX = badge('Warnings:', String(totals.warnings), badgeX);
   cursorY += 50;
-
-  // Grammar Rules section
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(12);
-  doc.setTextColor(20);
-  doc.text('Grammar Rules', margin, cursorY);
-  cursorY += 16;
-  doc.setFont('helvetica', 'normal');
-  doc.setFontSize(10);
-  if (grammarRules.length === 0) {
-    doc.text('No grammar rules provided.', margin, cursorY);
-    cursorY += 20;
-  } else {
-    const rulesText = grammarRules.map((r, i) => `${i + 1}. ${r}`).join('\n');
-    const wrapped = doc.splitTextToSize(rulesText, contentWidth);
-    doc.text(wrapped, margin, cursorY);
-    cursorY += wrapped.length * 12 + 16;
-  }
 
   // Token Table - prepare rows
   // Render per-line sections: Lexical Analysis, Symbol Table, Parse Tree
