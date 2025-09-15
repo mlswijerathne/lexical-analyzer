@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { QuestionMarkCircleIcon, XMarkIcon } from '@heroicons/react/24/solid';
 import Button from './Button';
 

@@ -48,8 +48,7 @@ export default function EditorPane({
       }
     });
     
-    editorInstance.addCommand(monacoApi.KeyMod.CtrlCmd | monacoApi.KeyCode.KeyS, (e: any) => {
-      e.preventDefault();
+    editorInstance.addCommand(monacoApi.KeyMod.CtrlCmd | monacoApi.KeyCode.KeyS, () => {
       if (results) {
         downloadReport();
       }
@@ -61,12 +60,38 @@ export default function EditorPane({
     
     // Add global F1 listener
     const handleGlobalKeydown = (e: KeyboardEvent) => {
+      // Open help (F1)
       if (e.key === 'F1') {
         e.preventDefault();
         setShowShortcuts(true);
+        return;
       }
+
+      // Close help (Escape)
       if (e.key === 'Escape') {
         setShowShortcuts(false);
+        return;
+      }
+
+      // Cross-platform modifier detection (Ctrl on Windows/Linux, Meta on macOS)
+      const mod = (e.ctrlKey || e.metaKey);
+
+      // Save / Download report (Ctrl+S or Cmd+S) - prevent browser "Save page" dialog
+      if (mod && (e.key === 's' || e.key === 'S')) {
+        e.preventDefault();
+        if (results) {
+          downloadReport();
+        }
+        return;
+      }
+
+      // Analyze (Ctrl+Enter / Cmd+Enter)
+      if (mod && e.key === 'Enter') {
+        e.preventDefault();
+        if (!processing && input.trim()) {
+          analyze();
+        }
+        return;
       }
     };
     
