@@ -1,9 +1,14 @@
 import { useState } from 'react';
-import jsPDF from 'jspdf';
-import EditorPane from './components/EditorPane';
+import EditorPane from './components/EditorPanel';
 import ResultsPanel from './components/ResultsPanel';
 import SidebarStats from './components/SidebarStats';
-import { ClockIcon } from '@heroicons/react/24/solid';
+import HistoryPanel from './components/HistoryPanel';
+import WelcomeSection from './components/WelcomeSection';
+import AboutUs from './components/AboutUs';
+import Button from './components/Button';
+import { ClockIcon, UserGroupIcon } from '@heroicons/react/24/solid';
+import { addToHistory, type HistorySummary } from './utils/history';
+import { generatePdf } from './components/PdfExporter';
 import { createToken, Lexer, CstParser, type IToken } from 'chevrotain';
 
 // -------------------- Define Tokens --------------------
@@ -480,7 +485,9 @@ const parserInstance = new EnhancedExpressionParser();
 export default function CompilerPlayground() {
   const [input, setInput] = useState<string>('3 + 4 * 5\n(a + b) * c\nx + y + z');
   const [results, setResults] = useState<AnalysisResult[] | null>(null);
-  // History state removed
+  const [showHistory, setShowHistory] = useState<boolean>(false);
+  const [showWelcome, setShowWelcome] = useState<boolean>(true);
+  const [showAboutUs, setShowAboutUs] = useState<boolean>(false);
   const [processing, setProcessing] = useState<boolean>(false);
   // Removed Grammar feature per request
 
@@ -494,6 +501,19 @@ export default function CompilerPlayground() {
     setTimeout(() => {
       const multilineResults = processMultilineInput(input);
       setResults(multilineResults);
+      // Build a small summary and add to history (store input and stats)
+      try {
+        const summary: HistorySummary = multilineResults.reduce((acc, r) => ({
+          tokens: acc.tokens + r.lexResult.tokens.length,
+          symbols: acc.symbols + r.symbolTable.length,
+          errors: acc.errors + r.parseErrors.length,
+          valid: acc.valid + (r.isValid ? 1 : 0)
+        }), { tokens: 0, symbols: 0, errors: 0, valid: 0 });
+
+        addToHistory({ input, summary });
+      } catch (e) {
+        // ignore history errors
+      }
       setProcessing(false);
     }, 300);
   };
@@ -506,75 +526,8 @@ export default function CompilerPlayground() {
 
   const downloadReport = () => {
     if (!results) return;
-
-    const doc = new jsPDF({ unit: 'pt', format: 'a4' });
-    const pageWidth = doc.internal.pageSize.getWidth();
-    const margin = 40;
-    const lineHeight = 14;
-    let y = margin;
-
-    const writeLine = (text: string, indent = 0) => {
-      const maxWidth = pageWidth - margin * 2 - indent;
-      const lines: string[] = doc.splitTextToSize(text, maxWidth) as string[];
-      lines.forEach((ln: string) => {
-        if (y > doc.internal.pageSize.getHeight() - margin) {
-          doc.addPage();
-          y = margin;
-        }
-        doc.text(ln, margin + indent, y);
-        y += lineHeight;
-      });
-    };
-
-    doc.setFont('helvetica', 'bold');
-    writeLine('LEXICAL ANALYZER & PARSER REPORT');
-    doc.setFont('helvetica', 'normal');
-    writeLine(`Generated: ${new Date().toLocaleString()}`);
-    y += 6;
-
-    results.forEach((result) => {
-      doc.setFont('helvetica', 'bold');
-      writeLine(`=== LINE ${result.line}: "${result.input}" ===`);
-      doc.setFont('helvetica', 'normal');
-      writeLine(`Status: ${result.isValid ? 'ACCEPTED' : 'REJECTED'}`);
-      y += 6;
-
-      writeLine('TOKENS:');
-      result.lexResult.tokens.forEach(t => {
-        writeLine(`${t.image} : ${t.tokenType.name} (Line ${t.startLine || 1}, Column ${t.startColumn || 1})`, 16);
-      });
-
-      y += 6;
-      writeLine('SYMBOL TABLE:');
-      if (result.symbolTable.length === 0) {
-        writeLine('None', 16);
-      } else {
-        writeLine('ID  LEXEME  TYPE  LINE  COLUMN  LENGTH  SCOPE', 16);
-        result.symbolTable.forEach(s => {
-          writeLine(`${s.id}  ${s.lexeme}  ${s.type}  ${s.line}  ${s.column}  ${s.length}  ${s.scope}`, 16);
-        });
-      }
-
-      y += 6;
-      writeLine('PARSE TREE:');
-      if (result.treeLines.length > 0) {
-        result.treeLines.forEach(line => writeLine(line, 16));
-      } else {
-        writeLine('No parse tree (parsing failed)', 16);
-      }
-
-      y += 6;
-      writeLine('ERRORS:');
-      if (result.parseErrors.length > 0) {
-        result.parseErrors.forEach(e => writeLine(`${e.type?.toUpperCase() || 'ERROR'} at line ${result.line}, column ${e.column || 1}${e.symbol ? `, symbol "${e.symbol}"` : ''}: ${e.message || JSON.stringify(e)}`, 16));
-      } else {
-        writeLine('None', 16);
-      }
-
-      y += lineHeight;
-    });
-
-    doc.save(`compiler_report_${new Date().toISOString().split('T')[0]}.pdf`);
+    // Call centralized PDF generator, request single-page compact export
+    generatePdf({ results, input, singlePage: true });
   };
 
   // markers handled in EditorPane
@@ -597,32 +550,71 @@ export default function CompilerPlayground() {
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: '#1e1e1e', color: '#d4d4d4' }}>
+      {/* History Panel */}
+      {showHistory && (
+        <HistoryPanel 
+          onClose={() => setShowHistory(false)} 
+          onSelectItem={(historyInput) => {
+            setInput(historyInput);
+            setShowHistory(false);
+          }} 
+        />
+      )}
+
+      {/* About Us Panel */}
+      {showAboutUs && (
+        <AboutUs 
+          isVisible={showAboutUs}
+          onClose={() => setShowAboutUs(false)} 
+        />
+      )}
+      
       {/* Header */}
-      <div className="border-b" style={{ backgroundColor: '#252526', borderColor: '#333' }}>
-        <div className="max-w-7xl mx-auto px-6 py-4">
+      <div className="border-b bg-gradient-to-r from-gray-900 to-gray-800 shadow-xl" style={{ borderColor: '#333' }}>
+        <div className="max-w-7xl mx-auto px-6 py-8">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold" style={{ color: '#e7e7e7' }}>Compiler Playground</h1>
-              <p style={{ color: '#9aa0a6' }}>Professional Lexical Analyzer & Parser with Chevrotain</p>
+              <h1 className="text-4xl font-bold text-white">
+                Compiler Playground
+              </h1>
+              <p className="text-lg mt-2" style={{ color: '#b4b7bd' }}>
+                Professional Lexical Analyzer & Parser
+              </p>
             </div>
-            <div className="flex gap-2">
-              <button
-                onClick={() => { /* no-op */ }}
-                className="px-4 py-2 rounded-lg transition-colors flex items-center gap-2"
-                style={{ backgroundColor: '#0e639c', color: 'white' }}
+            <div className="flex gap-3">
+              <Button
+                onClick={() => setShowHistory(true)}
+                iconLeft={<ClockIcon className="h-4 w-4" />}
+                variant="primary"
+                size="md"
               >
-                <ClockIcon className="h-4 w-4" />
                 History
-              </button>
+              </Button>
+              <Button
+                onClick={() => setShowAboutUs(true)}
+                iconLeft={<UserGroupIcon className="h-4 w-4" />}
+                variant="secondary"
+                size="md"
+              >
+                About Us
+              </Button>
             </div>
           </div>
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-6 py-6">
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
+        <div className="grid grid-cols-1 xl:grid-cols-4 gap-6 lg:gap-8">
           {/* Input Section */}
-          <div className="lg:col-span-3">
+          <div className="xl:col-span-3 space-y-6">
+            <WelcomeSection 
+              isVisible={showWelcome}
+              onDismiss={() => setShowWelcome(false)}
+              onSelectExample={(example) => {
+                setInput(example);
+                setShowWelcome(false);
+              }}
+            />
             <EditorPane
               input={input}
               setInput={setInput}
@@ -635,46 +627,48 @@ export default function CompilerPlayground() {
           </div>
           
           {/* Sidebar */}
-          <div className="space-y-6">
-            <SidebarStats stats={stats} />
+          <div className="xl:col-span-1">
+            <div className="sticky top-6 space-y-6 lg:space-y-8">
+              <SidebarStats stats={stats} />
 
-            {/* Grammar UI removed per request */}
+              {/* Grammar UI removed per request */}
 
-            {/* Token Types */}
-            <div className="rounded-xl shadow-lg p-6" style={{ backgroundColor: '#1e1e1e', border: '1px solid #2d2d2d' }}>
-              <h3 className="text-lg font-semibold mb-4">Token Types</h3>
-              <div className="space-y-2 text-sm">
-                <div className="flex justify-between">
-                  <span className="font-mono" style={{ color: '#4FC1FF' }}>NumberLiteral</span>
-                  <span style={{ color: '#9aa0a6' }}>0-9, decimals</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="font-mono" style={{ color: '#C586C0' }}>Identifier</span>
-                  <span style={{ color: '#9aa0a6' }}>a-z, A-Z</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="font-mono" style={{ color: '#6A9955' }}>Plus</span>
-                  <span style={{ color: '#9aa0a6' }}>+</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="font-mono" style={{ color: '#CE9178' }}>Minus</span>
-                  <span style={{ color: '#9aa0a6' }}>-</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="font-mono" style={{ color: '#D19A66' }}>Multiply</span>
-                  <span style={{ color: '#9aa0a6' }}>*</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="font-mono" style={{ color: '#D19A66' }}>Divide</span>
-                  <span style={{ color: '#9aa0a6' }}>/</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="font-mono" style={{ color: '#DCDCAA' }}>Equals</span>
-                  <span style={{ color: '#9aa0a6' }}>=</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="font-mono" style={{ color: '#F44747' }}>Parentheses</span>
-                  <span style={{ color: '#9aa0a6' }}>( )</span>
+              {/* Token Types */}
+              <div className="rounded-xl shadow-xl p-6 border border-gray-700/50 bg-gradient-to-br from-gray-800 to-gray-900">
+                <h3 className="text-xl font-semibold mb-6 text-white">Token Types</h3>
+                <div className="space-y-3 text-sm">
+                  <div className="flex justify-between items-center p-2 rounded-lg bg-gray-700/30 hover:bg-gray-700/50 transition-colors">
+                    <span className="font-mono font-medium" style={{ color: '#4FC1FF' }}>NumberLiteral</span>
+                    <span className="text-xs px-2 py-1 rounded bg-gray-600/50" style={{ color: '#9aa0a6' }}>0-9, decimals</span>
+                  </div>
+                  <div className="flex justify-between items-center p-2 rounded-lg bg-gray-700/30 hover:bg-gray-700/50 transition-colors">
+                    <span className="font-mono font-medium" style={{ color: '#C586C0' }}>Identifier</span>
+                    <span className="text-xs px-2 py-1 rounded bg-gray-600/50" style={{ color: '#9aa0a6' }}>a-z, A-Z</span>
+                  </div>
+                  <div className="flex justify-between items-center p-2 rounded-lg bg-gray-700/30 hover:bg-gray-700/50 transition-colors">
+                    <span className="font-mono font-medium" style={{ color: '#6A9955' }}>Plus</span>
+                    <span className="text-xs px-2 py-1 rounded bg-gray-600/50" style={{ color: '#9aa0a6' }}>+</span>
+                  </div>
+                  <div className="flex justify-between items-center p-2 rounded-lg bg-gray-700/30 hover:bg-gray-700/50 transition-colors">
+                    <span className="font-mono font-medium" style={{ color: '#CE9178' }}>Minus</span>
+                    <span className="text-xs px-2 py-1 rounded bg-gray-600/50" style={{ color: '#9aa0a6' }}>-</span>
+                  </div>
+                  <div className="flex justify-between items-center p-2 rounded-lg bg-gray-700/30 hover:bg-gray-700/50 transition-colors">
+                    <span className="font-mono font-medium" style={{ color: '#D19A66' }}>Multiply</span>
+                    <span className="text-xs px-2 py-1 rounded bg-gray-600/50" style={{ color: '#9aa0a6' }}>*</span>
+                  </div>
+                  <div className="flex justify-between items-center p-2 rounded-lg bg-gray-700/30 hover:bg-gray-700/50 transition-colors">
+                    <span className="font-mono font-medium" style={{ color: '#D19A66' }}>Divide</span>
+                    <span className="text-xs px-2 py-1 rounded bg-gray-600/50" style={{ color: '#9aa0a6' }}>/</span>
+                  </div>
+                  <div className="flex justify-between items-center p-2 rounded-lg bg-gray-700/30 hover:bg-gray-700/50 transition-colors">
+                    <span className="font-mono font-medium" style={{ color: '#DCDCAA' }}>Equals</span>
+                    <span className="text-xs px-2 py-1 rounded bg-gray-600/50" style={{ color: '#9aa0a6' }}>=</span>
+                  </div>
+                  <div className="flex justify-between items-center p-2 rounded-lg bg-gray-700/30 hover:bg-gray-700/50 transition-colors">
+                    <span className="font-mono font-medium" style={{ color: '#F44747' }}>Parentheses</span>
+                    <span className="text-xs px-2 py-1 rounded bg-gray-600/50" style={{ color: '#9aa0a6' }}>( )</span>
+                  </div>
                 </div>
               </div>
             </div>
