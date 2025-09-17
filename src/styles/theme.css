@@ -1,0 +1,76 @@
+
+:root {
+  /* Background colors - Simple dark theme */
+  --bg-primary: #4b4949;    /* Main background */
+  --bg-secondary: #2a2a2a;   /* Cards, panels */
+  --bg-tertiary: #333333;    /* Elevated elements */
+  
+  /* Border colors */
+  --border-primary: #4a9eff;  /* Primary accent border */
+  --border-secondary: #404040; /* Subtle borders */
+  
+  /* Text colors */
+  --text-primary: #ffffff;    /* Main text */
+  --text-secondary: #b0b0b0;  /* Secondary text */
+  --text-muted: #808080;      /* Muted text */
+
+  /* Accent colors */
+  --accent-primary: #4a9eff;  /* Primary actions, links */
+  --accent-success: #4ade80;  /* Success states */
+  --accent-error: #f87171;    /* Error states */
+  
+  /* Interactive states */
+  --hover-bg: #383838;        /* Hover background */
+  --active-bg: #484848;       /* Active/pressed state */
+  
+  /* Component-specific */
+  --backdrop: rgba(0, 0, 0, 0.6); /* Modal backdrop */
+  --shadow: rgba(0, 0, 0, 0.3);   /* Box shadows */
+}
+
+/* Utility classes */
+.bg-primary { background-color: var(--bg-primary) !important; }
+.bg-secondary { background-color: var(--bg-secondary) !important; }
+.bg-tertiary { background-color: var(--bg-tertiary) !important; }
+
+.border-primary { border-color: var(--border-primary) !important; }
+.border-secondary { border-color: var(--border-secondary) !important; }
+
+.text-primary { color: var(--text-primary) !important; }
+.text-secondary { color: var(--text-secondary) !important; }
+.text-muted { color: var(--text-muted) !important; }
+
+.accent-primary { color: var(--accent-primary) !important; }
+.accent-success { color: var(--accent-success) !important; }
+.accent-error { color: var(--accent-error) !important; }
+
+.hover-bg:hover { background-color: var(--hover-bg) !important; }
+.active-bg:active { background-color: var(--active-bg) !important; }
+
+/* Simplified button styles */
+.btn-primary {
+  background-color: var(--accent-primary) !important;
+  color: var(--text-primary) !important;
+  border: 1px solid var(--accent-primary) !important;
+}
+
+.btn-primary:hover {
+  background-color: #3788e6 !important;
+}
+
+.btn-secondary {
+  background-color: var(--bg-tertiary) !important;
+  color: var(--text-primary) !important;
+  border: 1px solid var(--border-secondary) !important;
+}
+
+.btn-secondary:hover {
+  background-color: var(--hover-bg) !important;
+}
+
+/* Simplified card style */
+.card {
+  background-color: var(--bg-secondary) !important;
+  border: 1px solid var(--border-secondary) !important;
+  box-shadow: 0 4px 6px var(--shadow) !important;
+}

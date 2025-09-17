@@ -34,18 +34,16 @@ export default function Button({
   
   // Variant classes (including hover and active states)
   const variantClasses = {
-    primary: `bg-[#0e639c] text-white hover:bg-[#1177bd] active:bg-[#0d5689] hover:shadow-md 
-              disabled:bg-[#0e639c]/50 disabled:hover:bg-[#0e639c]/50 disabled:shadow-none`,
-    secondary: `bg-[#2d2d2d] text-[#d4d4d4] hover:bg-[#3a3a3a] active:bg-[#252525] hover:shadow-md 
-                border border-[#333] disabled:bg-[#2d2d2d]/60 disabled:hover:bg-[#2d2d2d]/60 disabled:shadow-none`,
-    success: `bg-[#388a34] text-white hover:bg-[#46a340] active:bg-[#2d7329] hover:shadow-md 
-              disabled:bg-[#388a34]/50 disabled:hover:bg-[#388a34]/50 disabled:shadow-none`,
-    danger: `bg-[#F14C4C] text-white hover:bg-[#f36868] active:bg-[#d43c3c] hover:shadow-md 
-            disabled:bg-[#F14C4C]/50 disabled:hover:bg-[#F14C4C]/50 disabled:shadow-none`,
+    primary: `btn-primary disabled:opacity-50 disabled:cursor-not-allowed`,
+    secondary: `btn-secondary disabled:opacity-50 disabled:cursor-not-allowed`,
+    success: `bg-[var(--accent-success)] text-[var(--text-primary)] hover:bg-[color-mix(in_srgb,var(--accent-success)_80%,white)] 
+              disabled:opacity-50 disabled:cursor-not-allowed`,
+    danger: `bg-[var(--accent-error)] text-[var(--text-primary)] hover:bg-[color-mix(in_srgb,var(--accent-error)_80%,white)] 
+            disabled:opacity-50 disabled:cursor-not-allowed`,
   }[variant];
   
   // Disabled classes
-  const disabledClasses = disabled ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer';
+  const disabledClasses = disabled ? '' : 'cursor-pointer';
   
   // Icon spacing
   const iconLeftSpacing = iconLeft ? 'gap-2' : '';
