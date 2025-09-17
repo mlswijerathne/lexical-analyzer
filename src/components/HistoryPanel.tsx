@@ -63,25 +63,26 @@ export default function HistoryPanel({ onClose, onSelectItem }: HistoryPanelProp
 
   return (
     <div 
-      className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50"
+      className="fixed inset-0 flex items-center justify-center z-50"
+      style={{ backgroundColor: 'var(--backdrop)' }}
       onClick={(e) => {
         // Close when clicking the backdrop
         if (e.target === e.currentTarget) onClose();
       }}
     >
       <div 
-        className="relative rounded-xl shadow-xl max-w-3xl w-full mx-4 max-h-[80vh] flex flex-col bg-gradient-to-br from-gray-800 to-gray-900 border border-gray-700/50"
+        className="card relative rounded-xl max-w-3xl w-full mx-4 max-h-[80vh] flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-700/50">
+        <div className="flex items-center justify-between p-6 border-b border-secondary">
           <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-blue-500/20">
-              <ClockIcon className="h-6 w-6 text-blue-400" />
+            <div className="p-2 rounded-lg bg-tertiary">
+              <ClockIcon className="h-6 w-6 accent-primary" />
             </div>
             <div>
-              <h2 className="text-xl font-semibold text-white">Analysis History</h2>
-              <p className="text-gray-400 text-sm">Your recent lexical analysis sessions</p>
+              <h2 className="text-xl font-semibold text-primary">Analysis History</h2>
+              <p className="text-secondary text-sm">Your recent lexical analysis sessions</p>
             </div>
           </div>
           <div className="flex gap-2">

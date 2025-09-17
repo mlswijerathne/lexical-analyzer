@@ -27,26 +27,21 @@ type AnalysisResult = {
 
 const getTokenColor = (tokenType: string): string => {
   const colors: Record<string, string> = {
-    'NumberLiteral': '#4FC1FF',
-    'Identifier': '#C586C0', 
-    'Plus': '#6A9955',
-    'Minus': '#CE9178',
-    'Multiply': '#D19A66',
-    'Divide': '#D19A66',
-    'Equals': '#DCDCAA',
-    'LParen': '#F44747',
-    'RParen': '#F44747'
+    'NumberLiteral': 'var(--accent-primary)',
+    'Identifier': 'var(--text-secondary)', 
+    'Plus': 'var(--text-secondary)',
+    'Minus': 'var(--text-secondary)',
+    'Multiply': 'var(--text-secondary)',
+    'Divide': 'var(--text-secondary)',
+    'Equals': 'var(--text-secondary)',
+    'LParen': 'var(--accent-error)',
+    'RParen': 'var(--accent-error)'
   };
-  return colors[tokenType] || '#9aa0a6';
+  return colors[tokenType] || 'var(--text-muted)';
 };
 
 const getErrorColor = (errorType: string): string => {
-  const colors: Record<string, string> = {
-    'lexical': '#F44747',
-    'syntactic': '#FF8C42', 
-    'runtime': '#FF6B6B'
-  };
-  return colors[errorType] || '#F44747';
+  return 'var(--accent-error)';
 };
 
 export default function ResultsPanel({ results }: { results: AnalysisResult[] }) {
@@ -82,22 +77,22 @@ export default function ResultsPanel({ results }: { results: AnalysisResult[] })
   }), { tokens: 0, symbols: 0, errors: 0, valid: 0 });
 
   return (
-    <div className="rounded-xl p-6 shadow-xl border border-gray-700/50 bg-gradient-to-br from-gray-800 to-gray-900">
+    <div className="card rounded-xl p-6">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between mb-6 gap-4">
           <div>
-            <h3 className="text-xl font-semibold text-white">Analysis Results</h3>
-            <p className="text-sm text-gray-400 mt-1">
+            <h3 className="text-xl font-semibold text-primary">Analysis Results</h3>
+            <p className="text-sm text-secondary mt-1">
               {results.length} expressions analyzed • {totalStats.valid}/{results.length} valid
             </p>
           </div>
           <div className="flex gap-4 text-sm">
             <div className="text-center">
-              <div className="text-blue-400 font-semibold">{totalStats.tokens}</div>
-              <div className="text-gray-400">Tokens</div>
+              <div className="accent-primary font-semibold">{totalStats.tokens}</div>
+              <div className="text-muted">Tokens</div>
             </div>
             <div className="text-center">
-              <div className="text-purple-400 font-semibold">{totalStats.symbols}</div>
-              <div className="text-gray-400">Symbols</div>
+              <div className="text-secondary font-semibold">{totalStats.symbols}</div>
+              <div className="text-muted">Symbols</div>
             </div>
             <div className="text-center">
               <div className="text-red-400 font-semibold">{totalStats.errors}</div>

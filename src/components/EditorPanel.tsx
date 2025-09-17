@@ -142,11 +142,11 @@ export default function EditorPane({
     <>
       <KeyboardShortcuts isVisible={showShortcuts} onClose={() => setShowShortcuts(false)} />
       
-      <div className="rounded-xl p-6 shadow-xl border border-gray-700/50 bg-gradient-to-br from-gray-800 to-gray-900">
+      <div className="card rounded-xl p-6">
         <div className="flex items-center justify-between mb-6">
           <div>
-            <label className="text-xl font-semibold text-white">Input Expressions</label>
-            <p className="text-sm text-gray-400 mt-1">Enter mathematical expressions or variable assignments</p>
+            <label className="text-xl font-semibold text-primary">Input Expressions</label>
+            <p className="text-sm text-secondary mt-1">Enter mathematical expressions or variable assignments</p>
           </div>
           <div className="flex gap-2">
             <Button 
@@ -170,7 +170,7 @@ export default function EditorPane({
           </div>
         </div>
 
-        <div className="border border-white-600/50 rounded-lg overflow-hidden shadow-inner bg-gray-900/50">
+        <div className="border border-primary rounded-lg overflow-hidden bg-tertiary">
           <Editor
             height="320px"
             language="plaintext"

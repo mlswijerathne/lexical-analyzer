@@ -42,16 +42,16 @@ export default function WelcomeSection({ onSelectExample, isVisible, onDismiss }
   if (!isVisible) return null;
 
   return (
-    <div className="mb-8 rounded-xl shadow-xl border border-blue-500/30 bg-gradient-to-br from-blue-900/20 to-purple-900/20 backdrop-blur-sm">
+    <div className="mb-8 card rounded-xl">
       <div className="p-6">
         <div className="flex items-start justify-between mb-4">
           <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-blue-500/20">
-              <LightBulbIcon className="h-6 w-6 text-blue-400" />
+            <div className="p-2 rounded-lg bg-tertiary">
+              <LightBulbIcon className="h-6 w-6 accent-primary" />
             </div>
             <div>
-              <h3 className="text-xl font-semibold text-white">Welcome to Compiler Playground</h3>
-              <p className="text-gray-300 mt-1">Get started with these example expressions</p>
+              <h3 className="text-xl font-semibold text-primary">Welcome to Compiler Playground</h3>
+              <p className="text-secondary mt-1">Get started with these example expressions</p>
             </div>
           </div>
           <div className="flex gap-2">
@@ -80,29 +80,29 @@ export default function WelcomeSection({ onSelectExample, isVisible, onDismiss }
               key={index}
               className={`group relative p-4 rounded-lg border transition-all cursor-pointer ${
                 selectedExample === index 
-                  ? 'border-blue-400 bg-blue-900/30' 
-                  : 'border-gray-600/50 bg-gray-800/30 hover:border-gray-500 hover:bg-gray-700/30'
+                  ? 'border-primary bg-tertiary' 
+                  : 'border-secondary bg-tertiary hover-bg'
               }`}
               onClick={() => setSelectedExample(selectedExample === index ? null : index)}
             >
               <div className="flex items-start justify-between">
                 <div className="flex-1 min-w-0">
-                  <h4 className="font-medium text-white mb-1 truncate">{example.title}</h4>
-                  <p className="text-sm text-gray-400 mb-3">{example.description}</p>
-                  <div className="bg-gray-900/50 rounded-md p-2 font-mono text-sm text-gray-300 border border-gray-600/30 overflow-x-auto">
+                  <h4 className="font-medium text-primary mb-1 truncate">{example.title}</h4>
+                  <p className="text-sm text-secondary mb-3">{example.description}</p>
+                  <div className="bg-primary rounded-md p-2 font-mono text-sm text-secondary border border-secondary overflow-x-auto">
                     {example.code}
                   </div>
                 </div>
                 <ChevronRightIcon 
-                  className={`h-5 w-5 text-gray-400 transition-transform ml-2 flex-shrink-0 ${
+                  className={`h-5 w-5 text-muted transition-transform ml-2 flex-shrink-0 ${
                     selectedExample === index ? 'rotate-90' : 'group-hover:translate-x-1'
                   }`} 
                 />
               </div>
               
               {selectedExample === index && (
-                <div className="mt-4 pt-4 border-t border-gray-600/50">
-                  <p className="text-sm text-gray-300 mb-4">{example.explanation}</p>
+                <div className="mt-4 pt-4 border-t border-secondary">
+                  <p className="text-sm text-secondary mb-4">{example.explanation}</p>
                   <Button
                     onClick={(e) => {
                       e.stopPropagation();
@@ -120,9 +120,9 @@ export default function WelcomeSection({ onSelectExample, isVisible, onDismiss }
           ))}
         </div>
 
-            <div className="p-4 rounded-lg bg-gray-800/50 border border-gray-600/30">
-              <h4 className="font-medium text-white mb-2">💡 Quick Tips</h4>
-              <ul className="text-sm text-gray-300 space-y-1">
+            <div className="p-4 rounded-lg bg-tertiary border border-secondary">
+              <h4 className="font-medium text-primary mb-2">💡 Quick Tips</h4>
+              <ul className="text-sm text-secondary space-y-1">
                 <li>• Use variables (a-z, A-Z) and numbers (0-9, decimals)</li>
                 <li>• Supported operators: +, -, *, /, =</li>
                 <li>• Use parentheses for grouping: (a + b) * c</li>

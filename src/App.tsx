@@ -4,7 +4,6 @@ import ResultsPanel from './components/ResultsPanel';
 import SidebarStats from './components/SidebarStats';
 import HistoryPanel from './components/HistoryPanel';
 import WelcomeSection from './components/WelcomeSection';
-import AboutUs from './components/AboutUs';
 import Button from './components/Button';
 import { ClockIcon, UserGroupIcon } from '@heroicons/react/24/solid';
 import { addToHistory, type HistorySummary } from './utils/history';
@@ -549,7 +548,7 @@ export default function CompilerPlayground() {
   const stats = getTotalStats();
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: '#1e1e1e', color: '#d4d4d4' }}>
+    <div className="min-h-screen bg-primary text-primary">
       {/* History Panel */}
       {showHistory && (
         <HistoryPanel 
@@ -570,14 +569,14 @@ export default function CompilerPlayground() {
       )}
       
       {/* Header */}
-      <div className="border-b bg-gradient-to-r from-gray-900 to-gray-800 shadow-xl" style={{ borderColor: '#333' }}>
+      <div className="border-b border-primary bg-secondary">
         <div className="max-w-7xl mx-auto px-6 py-8">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-4xl font-bold text-white">
+              <h1 className="text-4xl font-bold text-primary">
                 Compiler Playground
               </h1>
-              <p className="text-lg mt-2" style={{ color: '#b4b7bd' }}>
+              <p className="text-lg mt-2 text-secondary">
                 Professional Lexical Analyzer & Parser
               </p>
             </div>
@@ -589,14 +588,6 @@ export default function CompilerPlayground() {
                 size="md"
               >
                 History
-              </Button>
-              <Button
-                onClick={() => setShowAboutUs(true)}
-                iconLeft={<UserGroupIcon className="h-4 w-4" />}
-                variant="secondary"
-                size="md"
-              >
-                About Us
               </Button>
             </div>
           </div>
@@ -634,40 +625,40 @@ export default function CompilerPlayground() {
               {/* Grammar UI removed per request */}
 
               {/* Token Types */}
-              <div className="rounded-xl shadow-xl p-6 border border-gray-700/50 bg-gradient-to-br from-gray-800 to-gray-900">
-                <h3 className="text-xl font-semibold mb-6 text-white">Token Types</h3>
+              <div className="card rounded-xl p-6">
+                <h3 className="text-xl font-semibold mb-6 text-primary">Token Types</h3>
                 <div className="space-y-3 text-sm">
-                  <div className="flex justify-between items-center p-2 rounded-lg bg-gray-700/30 hover:bg-gray-700/50 transition-colors">
-                    <span className="font-mono font-medium" style={{ color: '#4FC1FF' }}>NumberLiteral</span>
-                    <span className="text-xs px-2 py-1 rounded bg-gray-600/50" style={{ color: '#9aa0a6' }}>0-9, decimals</span>
+                  <div className="flex justify-between items-center p-2 rounded-lg bg-tertiary hover-bg transition-colors">
+                    <span className="font-mono font-medium accent-primary">NumberLiteral</span>
+                    <span className="text-xs px-2 py-1 rounded bg-tertiary text-muted">0-9, decimals</span>
                   </div>
-                  <div className="flex justify-between items-center p-2 rounded-lg bg-gray-700/30 hover:bg-gray-700/50 transition-colors">
-                    <span className="font-mono font-medium" style={{ color: '#C586C0' }}>Identifier</span>
-                    <span className="text-xs px-2 py-1 rounded bg-gray-600/50" style={{ color: '#9aa0a6' }}>a-z, A-Z</span>
+                  <div className="flex justify-between items-center p-2 rounded-lg bg-tertiary hover-bg transition-colors">
+                    <span className="font-mono font-medium text-secondary">Identifier</span>
+                    <span className="text-xs px-2 py-1 rounded bg-tertiary text-muted">a-z, A-Z</span>
                   </div>
-                  <div className="flex justify-between items-center p-2 rounded-lg bg-gray-700/30 hover:bg-gray-700/50 transition-colors">
-                    <span className="font-mono font-medium" style={{ color: '#6A9955' }}>Plus</span>
-                    <span className="text-xs px-2 py-1 rounded bg-gray-600/50" style={{ color: '#9aa0a6' }}>+</span>
+                  <div className="flex justify-between items-center p-2 rounded-lg bg-tertiary hover-bg transition-colors">
+                    <span className="font-mono font-medium text-secondary">Plus</span>
+                    <span className="text-xs px-2 py-1 rounded bg-tertiary text-muted">+</span>
                   </div>
-                  <div className="flex justify-between items-center p-2 rounded-lg bg-gray-700/30 hover:bg-gray-700/50 transition-colors">
-                    <span className="font-mono font-medium" style={{ color: '#CE9178' }}>Minus</span>
-                    <span className="text-xs px-2 py-1 rounded bg-gray-600/50" style={{ color: '#9aa0a6' }}>-</span>
+                  <div className="flex justify-between items-center p-2 rounded-lg bg-tertiary hover-bg transition-colors">
+                    <span className="font-mono font-medium text-secondary">Minus</span>
+                    <span className="text-xs px-2 py-1 rounded bg-tertiary text-muted">-</span>
                   </div>
-                  <div className="flex justify-between items-center p-2 rounded-lg bg-gray-700/30 hover:bg-gray-700/50 transition-colors">
-                    <span className="font-mono font-medium" style={{ color: '#D19A66' }}>Multiply</span>
-                    <span className="text-xs px-2 py-1 rounded bg-gray-600/50" style={{ color: '#9aa0a6' }}>*</span>
+                  <div className="flex justify-between items-center p-2 rounded-lg bg-tertiary hover-bg transition-colors">
+                    <span className="font-mono font-medium text-secondary">Multiply</span>
+                    <span className="text-xs px-2 py-1 rounded bg-tertiary text-muted">*</span>
                   </div>
-                  <div className="flex justify-between items-center p-2 rounded-lg bg-gray-700/30 hover:bg-gray-700/50 transition-colors">
-                    <span className="font-mono font-medium" style={{ color: '#D19A66' }}>Divide</span>
-                    <span className="text-xs px-2 py-1 rounded bg-gray-600/50" style={{ color: '#9aa0a6' }}>/</span>
+                  <div className="flex justify-between items-center p-2 rounded-lg bg-tertiary hover-bg transition-colors">
+                    <span className="font-mono font-medium text-secondary">Divide</span>
+                    <span className="text-xs px-2 py-1 rounded bg-tertiary text-muted">/</span>
                   </div>
-                  <div className="flex justify-between items-center p-2 rounded-lg bg-gray-700/30 hover:bg-gray-700/50 transition-colors">
-                    <span className="font-mono font-medium" style={{ color: '#DCDCAA' }}>Equals</span>
-                    <span className="text-xs px-2 py-1 rounded bg-gray-600/50" style={{ color: '#9aa0a6' }}>=</span>
+                  <div className="flex justify-between items-center p-2 rounded-lg bg-tertiary hover-bg transition-colors">
+                    <span className="font-mono font-medium text-secondary">Equals</span>
+                    <span className="text-xs px-2 py-1 rounded bg-tertiary text-muted">=</span>
                   </div>
-                  <div className="flex justify-between items-center p-2 rounded-lg bg-gray-700/30 hover:bg-gray-700/50 transition-colors">
-                    <span className="font-mono font-medium" style={{ color: '#F44747' }}>Parentheses</span>
-                    <span className="text-xs px-2 py-1 rounded bg-gray-600/50" style={{ color: '#9aa0a6' }}>( )</span>
+                  <div className="flex justify-between items-center p-2 rounded-lg bg-tertiary hover-bg transition-colors">
+                    <span className="font-mono font-medium accent-error">Parentheses</span>
+                    <span className="text-xs px-2 py-1 rounded bg-tertiary text-muted">( )</span>
                   </div>
                 </div>
               </div>
