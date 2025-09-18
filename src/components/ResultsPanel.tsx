@@ -20,6 +20,7 @@ type AnalysisResult = {
   parseErrors: ParseError[];
   treeLines: string[];
   isValid: boolean;
+  errorType: 'lexical' | 'syntactic' | 'runtime' | null;
   input?: string;
   line?: number;
 };
@@ -39,7 +40,7 @@ const getTokenColor = (tokenType: string): string => {
   return colors[tokenType] || 'var(--text-muted)';
 };
 
-const getErrorColor = (errorType: string): string => {
+const getErrorColor = (): string => {
   return 'var(--accent-error)';
 };
 
