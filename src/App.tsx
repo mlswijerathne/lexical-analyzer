@@ -5,7 +5,7 @@ import SidebarStats from './components/SidebarStats';
 import HistoryPanel from './components/HistoryPanel';
 import WelcomeSection from './components/WelcomeSection';
 import Button from './components/Button';
-import { ClockIcon, UserGroupIcon } from '@heroicons/react/24/solid';
+import { ClockIcon } from '@heroicons/react/24/solid';
 import { addToHistory, type HistorySummary } from './utils/history';
 import { generatePdf } from './components/PdfExporter';
 import { createToken, Lexer, CstParser, type IToken } from 'chevrotain';
@@ -486,7 +486,6 @@ export default function CompilerPlayground() {
   const [results, setResults] = useState<AnalysisResult[] | null>(null);
   const [showHistory, setShowHistory] = useState<boolean>(false);
   const [showWelcome, setShowWelcome] = useState<boolean>(true);
-  const [showAboutUs, setShowAboutUs] = useState<boolean>(false);
   const [processing, setProcessing] = useState<boolean>(false);
   // Removed Grammar feature per request
 
@@ -560,13 +559,6 @@ export default function CompilerPlayground() {
         />
       )}
 
-      {/* About Us Panel */}
-      {showAboutUs && (
-        <AboutUs 
-          isVisible={showAboutUs}
-          onClose={() => setShowAboutUs(false)} 
-        />
-      )}
       
       {/* Header */}
       <div className="border-b border-primary bg-secondary">

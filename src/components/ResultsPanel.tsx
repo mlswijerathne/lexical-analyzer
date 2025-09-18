@@ -20,7 +20,6 @@ type AnalysisResult = {
   parseErrors: ParseError[];
   treeLines: string[];
   isValid: boolean;
-  errorType: 'lexical' | 'syntactic' | 'runtime' | null;
   input?: string;
   line?: number;
 };
