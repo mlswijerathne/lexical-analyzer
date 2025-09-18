@@ -170,7 +170,7 @@ export async function generatePdf({ results, input = '', appName = 'Lexical Anal
         cursorY += 16;
       } else {
         // Show all tokens, no truncation
-        let tokenRows = tokens.map((t: any) => [t.image ?? '', (t.tokenType && t.tokenType.name) || '', String(t.image ?? ''), t.startLine ?? res.line ?? '', t.startColumn ?? '']);
+        const tokenRows = tokens.map((t: any) => [t.image ?? '', (t.tokenType && t.tokenType.name) || '', String(t.image ?? ''), t.startLine ?? res.line ?? '', t.startColumn ?? '']);
 
         autoTable(doc, {
           startY: cursorY,
@@ -199,7 +199,7 @@ export async function generatePdf({ results, input = '', appName = 'Lexical Anal
         cursorY += 16;
       } else {
         // Show all symbols, no truncation
-        let symRows = symbols.map((s: any) => [s.id ?? '', s.lexeme ?? '', s.type ?? '', s.line ?? '', s.column ?? '', s.length ?? '', s.scope ?? '']);
+        const symRows = symbols.map((s: any) => [s.id ?? '', s.lexeme ?? '', s.type ?? '', s.line ?? '', s.column ?? '', s.length ?? '', s.scope ?? '']);
 
         autoTable(doc, {
           startY: cursorY,
@@ -228,7 +228,7 @@ export async function generatePdf({ results, input = '', appName = 'Lexical Anal
         cursorY += 16;
       } else {
         // Show all tree lines regardless of page constraints
-        let toShow = treeLines;
+        const toShow = treeLines;
         autoTable(doc, {
           startY: cursorY,
           head: [['Parse Tree']],
