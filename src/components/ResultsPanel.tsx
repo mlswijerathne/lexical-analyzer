@@ -148,9 +148,9 @@ export default function ResultsPanel({ results }: { results: AnalysisResult[] })
                           <span 
                             className="px-2 py-1 rounded text-xs font-medium"
                             style={{ 
-                              backgroundColor: `${getErrorColor(error.type || 'runtime')}20`,
-                              color: getErrorColor(error.type || 'runtime'),
-                              border: `1px solid ${getErrorColor(error.type || 'runtime')}40`
+                              backgroundColor: `${getErrorColor()}20`,
+                              color: getErrorColor(),
+                              border: `1px solid ${getErrorColor()}40`
                             }}
                           >
                             {(error.type || 'error').toUpperCase()}
