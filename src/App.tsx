@@ -5,10 +5,12 @@ import SidebarStats from './components/SidebarStats';
 import HistoryPanel from './components/HistoryPanel';
 import WelcomeSection from './components/WelcomeSection';
 import Button from './components/Button';
+import Footer from './components/Footer';
 import { ClockIcon} from '@heroicons/react/24/solid';
 import { addToHistory, type HistorySummary } from './utils/history';
 import { generatePdf } from './components/PdfExporter';
 import { createToken, Lexer, CstParser, type IToken } from 'chevrotain';
+
 
 // -------------------- Define Tokens --------------------
 const WhiteSpace = createToken({ name: 'WhiteSpace', pattern: /\s+/, group: Lexer.SKIPPED });
@@ -657,6 +659,7 @@ export default function CompilerPlayground() {
           </div>
         </div>
       </div>
+      <Footer onOpenHistory={() => setShowHistory(true)} />
     </div>
   );
 }
