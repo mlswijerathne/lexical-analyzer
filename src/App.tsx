@@ -10,6 +10,9 @@ import { addToHistory, type HistorySummary } from "./utils/history";
 import { generatePdf } from "./components/PdfExporter";
 import { createToken, Lexer, CstParser, type IToken } from "chevrotain";
 import { cstToSimplifiedIndentedLines } from "./utils/mermaidTree";
+import Footer from './components/Footer';
+
+
 
 // -------------------- Define Tokens --------------------
 const WhiteSpace = createToken({
@@ -770,6 +773,7 @@ export default function CompilerPlayground() {
           </div>
         </div>
       </div>
+      <Footer onOpenHistory={() => setShowHistory(true)} />
     </div>
   );
 }
