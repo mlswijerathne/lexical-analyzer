@@ -53,9 +53,15 @@ export async function generatePdf({
     mermaidCode: string,
   ): Promise<string | null> => {
     try {
+      // Enhance Mermaid configuration for better PDF rendering
+      const enhancedMermaidCode = mermaidCode.replace(
+        /^graph (TD|TB|LR)/m,
+        'graph TB\n%%{init: {"theme":"default","themeVariables":{"fontSize":"14px","fontFamily":"Arial"},"flowchart":{"nodeSpacing":80,"rankSpacing":80,"padding":20}}}%%'
+      );
+      
       // Use mermaid.ink service to convert Mermaid to PNG
-      const encodedDiagram = btoa(mermaidCode);
-      const imgUrl = `https://mermaid.ink/img/${encodedDiagram}`;
+      const encodedDiagram = btoa(enhancedMermaidCode);
+      const imgUrl = `https://mermaid.ink/img/${encodedDiagram}?type=png&theme=default`;
 
       // Create a temporary image to get the data URL
       const img = new Image();
@@ -64,11 +70,17 @@ export async function generatePdf({
           const canvas = document.createElement("canvas");
           const ctx = canvas.getContext("2d");
           if (ctx) {
-            canvas.width = img.width;
-            canvas.height = img.height;
+            // Add padding for better appearance
+            const padding = 20;
+            canvas.width = img.width + padding * 2;
+            canvas.height = img.height + padding * 2;
+            
+            // White background
             ctx.fillStyle = "white";
             ctx.fillRect(0, 0, canvas.width, canvas.height);
-            ctx.drawImage(img, 0, 0);
+            
+            // Draw image with padding
+            ctx.drawImage(img, padding, padding);
             resolve(canvas.toDataURL("image/png"));
           } else {
             resolve(null);
@@ -89,8 +101,17 @@ export async function generatePdf({
   
   // --- Styles & helpers ---
   const headingColor: [number, number, number] = [30, 30, 30];
+  
+  // Track which pages have headers/footers to avoid duplicate rendering (causes blur)
+  const pagesWithHeaders = new Set<number>();
 
   const addHeaderFooter = (pageNum: number, pageCount: number) => {
+    // Skip if this page already has a header/footer
+    if (pagesWithHeaders.has(pageNum)) {
+      return;
+    }
+    pagesWithHeaders.add(pageNum);
+    
     // Header
     doc.setFontSize(10);
     doc.setTextColor(100);
@@ -194,18 +215,16 @@ export async function generatePdf({
     const footerReserve = 36 + 18;
     let linesRendered = 0;
 
-    // Use one page per line if multiple lines and not forcing single page
-    const useOnePagePerLine = results.length >= 2 && !singlePage;
-
+    // Always start each line on a new page when multiple lines exist (except first line and single page mode)
     for (let i = 0; i < results.length; i++) {
       const res = results[i];
 
-      // Start a new page for each line (except the first one) when useOnePagePerLine is true
-      if (useOnePagePerLine && i > 0) {
+      // For multiple lines analysis: always start second and subsequent lines on a new page
+      if (i > 0 && !singlePage) {
         doc.addPage();
         cursorY = 60;
-        // Add header/footer to the new page
-        addHeaderFooter(i + 1, results.length);
+        const currentPageNum = doc.getNumberOfPages();
+        addHeaderFooter(currentPageNum, currentPageNum);
       }
 
       // Check page space when singlePage: stop if out of vertical space
@@ -231,6 +250,30 @@ export async function generatePdf({
 
       // --- Lexical Analysis Table for this line ---
       const tokens = res.lexResult?.tokens || [];
+      
+      // Check if there's enough space for Lexical Analysis section
+      // Minimum required space: heading + at least 3 rows of table
+      const minLexicalSpace = 120;
+      if (cursorY + minLexicalSpace > pageHeight - footerReserve && !singlePage) {
+        doc.addPage();
+        cursorY = 60;
+        const currentPageNum = doc.getNumberOfPages();
+        addHeaderFooter(currentPageNum, currentPageNum);
+        
+        // Re-add section context heading on new page
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(12);
+        doc.text(lineTitle, margin, cursorY);
+        cursorY += 14;
+      }
+      
+      // Add Lexical Analysis subtopic heading
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(11);
+      doc.setTextColor(40);
+      doc.text("1. Lexical Analysis", margin, cursorY);
+      cursorY += 16;
+      
       if (tokens.length === 0) {
         doc.setFont("helvetica", "normal");
         doc.setFontSize(10);
@@ -278,6 +321,30 @@ export async function generatePdf({
 
       // --- Symbol Table for this line ---
       const symbols = res.symbolTable || [];
+      
+      // Check if there's enough space for Symbol Table section
+      // Minimum required space: heading + at least 3 rows of table
+      const minSymbolSpace = 120;
+      if (cursorY + minSymbolSpace > pageHeight - footerReserve && !singlePage) {
+        doc.addPage();
+        cursorY = 60;
+        const currentPageNum = doc.getNumberOfPages();
+        addHeaderFooter(currentPageNum, currentPageNum);
+        
+        // Add section context on new page
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(12);
+        doc.text(lineTitle, margin, cursorY);
+        cursorY += 14;
+      }
+      
+      // Add Symbol Table subtopic heading
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(11);
+      doc.setTextColor(40);
+      doc.text("2. Symbol Table", margin, cursorY);
+      cursorY += 16;
+      
       if (symbols.length === 0) {
         doc.setFont("helvetica", "normal");
         doc.setFontSize(10);
@@ -327,12 +394,26 @@ export async function generatePdf({
         cursorY += 8;
       }
 
-      // --- Mermaid Diagram Section ---
+      const estimatedDiagramHeight = 470; // Approximate height needed for diagram (increased for heading)
+      if (cursorY + estimatedDiagramHeight > pageHeight - footerReserve && !singlePage) {
+        doc.addPage();
+        cursorY = 60;
+        const currentPageNum = doc.getNumberOfPages();
+        addHeaderFooter(currentPageNum, currentPageNum);
+        
+        // Add section context on new page
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(12);
+        doc.text(lineTitle, margin, cursorY);
+        cursorY += 14;
+      }
+
+      // Add Parse Tree Diagram subtopic heading
       doc.setFont("helvetica", "bold");
-      doc.setFontSize(12);
-      doc.setTextColor(20);
-      doc.text("Parse Tree Diagram", margin, cursorY);
-      cursorY += 20;
+      doc.setFontSize(11);
+      doc.setTextColor(40);
+      doc.text("3. Parse Tree Diagram", margin, cursorY);
+      cursorY += 16;
 
       // Generate Mermaid diagram
       let mermaidCode = "";
@@ -348,9 +429,9 @@ export async function generatePdf({
           const imgDataUrl = await renderMermaidToImage(mermaidCode);
           
           if (imgDataUrl) {
-            // Calculate dimensions to fit within content area
             const maxWidth = contentWidth;
-            const maxHeight = 400;
+            const remainingPageHeight = pageHeight - cursorY - footerReserve - 20;
+            const maxHeight = singlePage ? Math.min(350, remainingPageHeight) : Math.min(500, remainingPageHeight);
             
             // Create a temporary image to get dimensions
             const tempImg = new Image();
@@ -366,16 +447,15 @@ export async function generatePdf({
             let imgWidth = tempImg.width || maxWidth;
             let imgHeight = tempImg.height || 300;
             
-            if (imgWidth > maxWidth) {
-              imgHeight = (imgHeight * maxWidth) / imgWidth;
-              imgWidth = maxWidth;
-            }
-            if (imgHeight > maxHeight) {
-              imgWidth = (imgWidth * maxHeight) / imgHeight;
-              imgHeight = maxHeight;
-            }
+            // Scale to fit within bounds
+            const widthRatio = maxWidth / imgWidth;
+            const heightRatio = maxHeight / imgHeight;
+            const scale = Math.min(widthRatio, heightRatio, 1); // Don't upscale
             
-            // Center the image
+            imgWidth = imgWidth * scale;
+            imgHeight = imgHeight * scale;
+            
+            // Center the image horizontally
             const xOffset = margin + (contentWidth - imgWidth) / 2;
             
             // Add the image to the PDF
@@ -434,42 +514,94 @@ export async function generatePdf({
       }
 
       // --- Parse Tree (indented lines) ---
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(12);
-      doc.setTextColor(20);
-      doc.text("Parse Tree (Text Format)", margin, cursorY);
-      cursorY += 20;
-
       const treeLines = res.treeLines || [];
+      
+      const headingSpace = 16; // Space the heading text takes
+      const postHeadingSpace = 16; // Space after heading before table
+      const tableHeaderSpace = 30; // Table header row
+      const minDataRowsSpace = 60; // At least 5 data rows
+      const safetyBuffer = 50; // Extra buffer to prevent autoTable from breaking
+      const totalMinRequiredSpace = headingSpace + postHeadingSpace + tableHeaderSpace + minDataRowsSpace + safetyBuffer;
+      const availableSpace = pageHeight - cursorY - footerReserve;
+      
+      // If not enough space (at least 172 units), move everything to new page
+      if (availableSpace < totalMinRequiredSpace && !singlePage) {
+        // Not enough space - start this ENTIRE section (heading + content) on a new page
+        doc.addPage();
+        cursorY = 60;
+        const currentPageNum = doc.getNumberOfPages();
+        addHeaderFooter(currentPageNum, currentPageNum);
+        
+        // Re-add section context on new page
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(12);
+        doc.text(lineTitle, margin, cursorY);
+        cursorY += 14;
+      }
+      
+      // Check if there's enough space for Parse Tree Text section
+      const estimatedTreeHeight = treeLines.length * 12 + 80; // Heading + table header + some rows
+      if (cursorY + estimatedTreeHeight > pageHeight - footerReserve && !singlePage) {
+        doc.addPage();
+        cursorY = 60;
+        const currentPageNum = doc.getNumberOfPages();
+        addHeaderFooter(currentPageNum, currentPageNum);
+        
+        // Add section context on new page
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(12);
+        doc.text(lineTitle, margin, cursorY);
+        cursorY += 14;
+      }
+
+      // Add Parse Tree (Text Format) subtopic heading
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(11);
+      doc.setTextColor(40);
+      doc.text("4. Parse Tree (Text Format)", margin, cursorY);
+      cursorY += 16;
+      
       if (treeLines.length === 0) {
         doc.setFont("helvetica", "normal");
         doc.setFontSize(10);
         doc.text("No parse tree available.", margin, cursorY);
         cursorY += 16;
       } else {
-        // Show all tree lines regardless of page constraints
+        // Show all tree lines
         const toShow = treeLines;
+        
         autoTable(doc, {
           startY: cursorY,
           head: [["Parse Tree Structure"]],
           body: toShow.map((l: string) => [l]),
           styles: {
-            font: "courier",
-            fontSize: singlePage ? 7 : 9,
-            cellPadding: 3,
+        font: "courier",
+        fontSize: singlePage ? 7 : 9,
+        cellPadding: 3,
           },
-          headStyles: { fillColor: headingColor, textColor: 255 },
+          headStyles: { 
+        fillColor: headingColor, 
+        textColor: 255,
+        minCellHeight: 14
+          },
+          bodyStyles: { minCellHeight: 10 },
           margin: { left: margin, right: margin },
           columnStyles: { 0: { cellWidth: contentWidth } },
+          tableLineWidth: 1,
+          showHead: "firstPage",
+          tableWidth: "auto",
           didDrawPage: (data) => {
-            const pageNum = data.pageNumber;
-            const pageCount = doc.getNumberOfPages();
-            addHeaderFooter(pageNum, pageCount);
+        const pageNum = data.pageNumber;
+        const pageCount = doc.getNumberOfPages();
+        addHeaderFooter(pageNum, pageCount);
           },
         });
+        
+        // Update cursor position after the autotable
         cursorY = (doc as any).lastAutoTable
           ? (doc as any).lastAutoTable.finalY + 8
           : cursorY + toShow.length * 12 + 8;
+        
         cursorY += 8;
       }
 
