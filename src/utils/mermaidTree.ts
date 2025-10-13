@@ -44,6 +44,48 @@ export function cstToMermaidGraph(cstNode: CstNode | null | undefined): string {
   return mermaidGraph;
 }
 
+// Compute a stable start offset for any CST entity (rule or token) to preserve
+// the original input order when traversing Chevrotain's CST which groups
+// children by label.
+function computeStartOffset(entity: any): number {
+  if (!entity) return Number.MAX_SAFE_INTEGER;
+  // Token node
+  if (entity.image !== undefined) {
+    return (
+      entity.startOffset ??
+      entity?.tokenType?.startOffset ??
+      Number.MAX_SAFE_INTEGER
+    );
+  }
+  // Rule node may have location info
+  const fromLocation = entity.location?.startOffset ?? entity.startOffset;
+  if (typeof fromLocation === "number") return fromLocation;
+
+  // Fallback: compute minimal start offset from its descendants
+  let min = Number.MAX_SAFE_INTEGER;
+  if (entity.children) {
+    for (const key of Object.keys(entity.children)) {
+      for (const child of entity.children[key] as any[]) {
+        const childStart = computeStartOffset(child);
+        if (childStart < min) min = childStart;
+      }
+    }
+  }
+  return min;
+}
+
+// Return all children flattened and sorted by their appearance order in input.
+function getOrderedChildren(node: CstNode): any[] {
+  if (!node.children) return [];
+  const flat: any[] = [];
+  for (const key of Object.keys(node.children)) {
+    const arr = node.children[key] as any[];
+    for (const child of arr) flat.push(child);
+  }
+  flat.sort((a, b) => computeStartOffset(a) - computeStartOffset(b));
+  return flat;
+}
+
 function generateSimplifiedMermaidNodes(
   node: CstNode,
   nodes: string[],
@@ -58,13 +100,9 @@ function generateSimplifiedMermaidNodes(
 
     if (skipNodes.includes(node.name)) {
       // Skip this node and process its children directly under the parent
-      if (node.children) {
-        for (const key of Object.keys(node.children)) {
-          const childArray = node.children[key];
-          for (const child of childArray) {
-            generateSimplifiedMermaidNodes(child, nodes, edges, parentId);
-          }
-        }
+      const orderedChildren = getOrderedChildren(node);
+      for (const child of orderedChildren) {
+        generateSimplifiedMermaidNodes(child, nodes, edges, parentId);
       }
       return currentId;
     }
@@ -84,13 +122,9 @@ function generateSimplifiedMermaidNodes(
     }
 
     // Process children if they exist
-    if (node.children) {
-      for (const key of Object.keys(node.children)) {
-        const childArray = node.children[key];
-        for (const child of childArray) {
-          generateSimplifiedMermaidNodes(child, nodes, edges, currentId);
-        }
-      }
+    const orderedChildren = getOrderedChildren(node);
+    for (const child of orderedChildren) {
+      generateSimplifiedMermaidNodes(child, nodes, edges, currentId);
     }
   } else if (node.image !== undefined) {
     // This is a terminal node (token) - show only the value for numbers/identifiers
@@ -232,13 +266,9 @@ export function cstToSimplifiedIndentedLines(
 
     if (skipNodes.includes(cstNode.name)) {
       // Skip this node and process its children at the same depth
-      if (cstNode.children) {
-        for (const key of Object.keys(cstNode.children)) {
-          const childArray = cstNode.children[key];
-          for (const child of childArray) {
-            lines.push(...cstToSimplifiedIndentedLines(child, depth));
-          }
-        }
+      const orderedChildren = getOrderedChildren(cstNode);
+      for (const child of orderedChildren) {
+        lines.push(...cstToSimplifiedIndentedLines(child, depth));
       }
       return lines;
     }
@@ -251,18 +281,14 @@ export function cstToSimplifiedIndentedLines(
 
     lines.push(`${indent}${nodeName}`);
 
-    if (cstNode.children) {
-      for (const key of Object.keys(cstNode.children)) {
-        const childArray = cstNode.children[key];
-        for (const child of childArray) {
-          if (child.name) {
-            lines.push(...cstToSimplifiedIndentedLines(child, depth + 1));
-          } else if (child.image) {
-            // For terminals, show only the value for better readability
-            const tokenValue = child.image;
-            lines.push(`${indent}  ${tokenValue}`);
-          }
-        }
+    const orderedChildren = getOrderedChildren(cstNode);
+    for (const child of orderedChildren) {
+      if ((child as CstNode).name) {
+        lines.push(...cstToSimplifiedIndentedLines(child as CstNode, depth + 1));
+      } else if ((child as any).image) {
+        // For terminals, show only the value for better readability
+        const tokenValue = (child as any).image;
+        lines.push(`${indent}  ${tokenValue}`);
       }
     }
   }
