@@ -1,39 +1,56 @@
 # Lexical Analyzer
 
-A modern web application for lexical analysis and tokenization, built with React and TypeScript. This tool provides an intuitive interface for analyzing source code and text, generating detailed tokenization results with export capabilities.
+A modern web application for lexical analysis and tokenization, built with React and TypeScript. Analyze mathematical expressions and simple statements, visualize parse trees, review tokens and symbols, export reports, and revisit past analyses.
 
 ## Features
 
-- **Interactive Editor**: Real-time code editing with syntax highlighting
-- **Token Analysis**: Comprehensive lexical analysis with detailed token breakdown
-- **History Management**: Track and review previous analysis sessions
-- **PDF Export**: Generate professional reports of analysis results
-- **Responsive Design**: Optimized for desktop and mobile devices
+- **Interactive editor (Monaco)**: Real-time code editing with VS Code–like shortcuts
+- **Token analysis (Chevrotain)**: Detailed token breakdown with positions
+- **CST parsing & validation**: Enhanced error detection and recovery, per-line analysis support
+- **Tree visualization (Mermaid)**: Simplified syntax tree rendering for quick inspection
+- **History management**: Save and revisit previous analysis sessions
+- **PDF export (jsPDF)**: Generate professional, shareable reports
+- **Keyboard shortcuts**: Built-in cheat sheet and common productivity keys
+- **Responsive UI**: Dark-themed, desktop-first layout
 
 ## Technology Stack
 
-- **Frontend**: React 19 with TypeScript
-- **Build Tool**: Vite 7
+- **Frontend**: React 19 + TypeScript
+- **Build tool**: Vite 7
 - **Styling**: Tailwind CSS 4
-- **Package Manager**: pnpm
-- **Code Quality**: ESLint with TypeScript support
+- **Editor**: Monaco Editor
+- **Parsing**: Chevrotain
+- **Diagrams**: Mermaid
+- **PDF**: jsPDF (+ autotable)
+- **UI**: Headless UI, Heroicons
+- **Package manager**: pnpm
+- **Code quality**: ESLint (TypeScript)
 
 ## Project Structure
 
 ```
 src/
-├── components/          # Reusable UI components
+├── components/
 │   ├── Button.tsx
-│   ├── EditorPane.tsx
+│   ├── EditorPanel.tsx
 │   ├── ResultsPanel.tsx
 │   ├── HistoryPanel.tsx
+│   ├── SidebarStats.tsx
+│   ├── WelcomeSection.tsx
+│   ├── KeyboardShortcuts.tsx
 │   ├── PdfExporter.tsx
-│   └── SidebarStats.tsx
-├── utils/              # Utility functions
-│   └── history.ts
-├── App.tsx             # Main application component
-├── main.tsx            # Application entry point
-└── index.css           # Global styles
+│   ├── MermaidTree.tsx
+│   └── Footer.tsx
+├── utils/
+│   ├── history.ts
+│   └── mermaidTree.ts
+├── types/
+│   └── mermaid.d.ts
+├── styles/
+│   └── theme.css
+├── App.tsx
+├── main.tsx
+└── index.css
 ```
 
 ## Quick Start
@@ -41,7 +58,7 @@ src/
 ### Prerequisites
 
 - Node.js 18+ (LTS recommended)
-- pnpm (recommended package manager)
+- pnpm (recommended)
 
 ### Installation
 
@@ -54,25 +71,49 @@ cd lexical-analyzer
 # Install dependencies
 pnpm install
 
-# Start development server
+# Start the development server
 pnpm dev
 ```
 
-The application will be available at `http://localhost:5173`.
+The app will be available at `http://localhost:5173`.
 
 ### Available Scripts
 
-- `pnpm dev` - Start development server
-- `pnpm build` - Build for production
-- `pnpm preview` - Preview production build
-- `pnpm lint` - Run ESLint
-
+- `pnpm dev`: Start development server
+- `pnpm build`: Type-check and build for production to `dist/`
+- `pnpm preview`: Preview the production build
+- `pnpm lint`: Run ESLint
 
 ## Usage
 
-1. **Input Source Code**: Paste or type your source code in the editor pane
-2. **Run Analysis**: Click the analyze button to perform lexical analysis
-3. **Review Results**: Examine the tokenization results in the results panel
-4. **Export Data**: Generate PDF reports or save analysis history
-5. **Track Progress**: Monitor analysis statistics in the sidebar
+1. **Enter expressions**: Type or paste one or more expressions (multi-line supported) in the editor.
+2. **Analyze**: Click Analyze or press `Ctrl + Enter`.
+3. **Review**: Inspect tokens, symbol table, errors, and the syntax tree.
+4. **Export**: Use the export action or press `Ctrl + S` to generate a PDF report.
+5. **History**: Toggle the history panel to restore a previous session.
+
+### Keyboard Shortcuts (highlights)
+
+- `Ctrl + Enter`: Analyze expressions
+- `Ctrl + S`: Save/Download report
+- `Ctrl + H`: Toggle history panel
+- `F1`: Open keyboard shortcuts
+- `Ctrl + F / G / Home / End`: Common navigation (Monaco/VS Code style)
+
+## Build & Deploy
+
+```bash
+pnpm build
+pnpm preview
+```
+
+The production build is output to `dist/` and can be deployed to any static host (e.g., GitHub Pages, Netlify, Vercel, S3/CloudFront).
+
+## Acknowledgements
+
+- Chevrotain — tokenization and parsing
+- Monaco Editor — in-browser code editor
+- Mermaid — diagram rendering
+- jsPDF — report generation
+- Tailwind CSS & Vite — DX and build tooling
 
